@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
-import { collection, deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { Unsubscribe, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { auth, db } from '../firebase';
 import { Usuario } from '../models/usuario.model';
@@ -30,13 +30,20 @@ export class AuthService {
   readonly esJuez = computed(() => this.usuarioActual()?.rol === 'juez');
   readonly jueces = computed(() => this._usuarios().filter((u) => u.rol === 'juez'));
 
+  private desuscribirUsuarios: Unsubscribe | null = null;
+
   constructor() {
     onAuthStateChanged(auth, async (usuarioFirebase: User | null) => {
       this._usuarioActual.set(usuarioFirebase ? await this.leerPerfil(usuarioFirebase.uid) : null);
       this._listo.set(true);
-    });
-    onSnapshot(collection(db, COLECCION), (snap) => {
-      this._usuarios.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Usuario));
+
+      this.desuscribirUsuarios?.();
+      this.desuscribirUsuarios = usuarioFirebase
+        ? onSnapshot(collection(db, COLECCION), (snap) => {
+            this._usuarios.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Usuario));
+          })
+        : null;
+      if (!usuarioFirebase) this._usuarios.set([]);
     });
   }
 
@@ -50,8 +57,8 @@ export class AuthService {
     }
   }
 
-  cerrarSesion(): void {
-    signOut(auth);
+  cerrarSesion(): Promise<void> {
+    return signOut(auth);
   }
 
   async agregarJuez(datos: { nombre: string; email: string; password: string }): Promise<{ ok: boolean; error?: string }> {

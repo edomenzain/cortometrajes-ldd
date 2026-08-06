@@ -71,8 +71,8 @@ export class App {
     this.menuUsuarioAbierto.set(false);
   }
 
-  protected cerrarSesion(): void {
-    this.auth.cerrarSesion();
+  protected async cerrarSesion(): Promise<void> {
+    await this.auth.cerrarSesion();
     this.router.navigateByUrl('/login');
   }
 }

@@ -1,11 +1,17 @@
 import { Routes } from '@angular/router';
-import { sesionActiva, soloAdmin, soloJuez } from './guards/auth.guard';
+import { sesionActiva, soloAdmin, soloInvitado, soloJuez } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'resultados' },
   {
     path: 'login',
+    canActivate: [soloInvitado],
     loadComponent: () => import('./pages/login/login-page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'dashboard',
+    canActivate: [soloAdmin],
+    loadComponent: () => import('./pages/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
   {
     path: 'cortometrajes',
@@ -21,6 +27,11 @@ export const routes: Routes = [
     path: 'jueces',
     canActivate: [soloAdmin],
     loadComponent: () => import('./pages/jueces/jueces-page').then((m) => m.JuecesPage),
+  },
+  {
+    path: 'premiaciones',
+    canActivate: [soloAdmin],
+    loadComponent: () => import('./pages/premiaciones/premiaciones-page').then((m) => m.PremiacionesPage),
   },
   {
     path: 'evaluar',

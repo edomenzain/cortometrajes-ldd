@@ -7,4 +7,5 @@ export interface Seccion {
   id: string;
   nombre: string;
   criterios: Criterio[];
+  premiacionIds: string[];
 }

@@ -8,6 +8,13 @@ export const sesionActiva: CanActivateFn = () => {
   return auth.usuarioActual() ? true : router.parseUrl('/login');
 };
 
+export const soloInvitado: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.usuarioActual()) return true;
+  return router.parseUrl(auth.esAdmin() ? '/dashboard' : '/evaluar');
+};
+
 export const soloAdmin: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -1,0 +1,133 @@
+<div class="flex flex-col gap-8">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-foreground">Panel de evaluaciones</h1>
+      <p class="mt-1 text-sm text-muted-foreground">Avance de los jueces y los cortometrajes, actualizado en tiempo real.</p>
+    </div>
+    <div class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted-foreground">
+      <span class="relative flex size-2">
+        <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
+        <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
+      </span>
+      En vivo
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl border border-border bg-surface p-5 card-shadow">
+      <p class="text-sm text-muted-foreground">Jueces registrados</p>
+      <p class="mt-2 text-3xl font-bold text-foreground">{{ totalJueces() }}</p>
+    </div>
+    <div class="rounded-2xl border border-border bg-surface p-5 card-shadow">
+      <p class="text-sm text-muted-foreground">Cortometrajes</p>
+      <p class="mt-2 text-3xl font-bold text-foreground">{{ totalCortos() }}</p>
+    </div>
+    <div class="rounded-2xl border border-border bg-surface p-5 card-shadow">
+      <p class="text-sm text-muted-foreground">Evaluaciones registradas</p>
+      <p class="mt-2 text-3xl font-bold text-foreground">{{ totalRealizado() }} <span class="text-base font-normal text-muted-foreground">/ {{ totalEsperado() }}</span></p>
+    </div>
+    <div class="rounded-2xl border border-accent bg-accent/5 p-5 card-shadow">
+      <p class="text-sm text-muted-foreground">Avance general</p>
+      <p class="mt-2 text-3xl font-bold text-foreground">{{ porcentajeGeneral() }}%</p>
+    </div>
+  </div>
+
+  <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+    <h2 class="font-semibold text-foreground">Premiaciones ({{ totalPremiaciones() }})</h2>
+    @if (lideresPorPremiacion().length === 0) {
+      <p class="text-sm text-muted-foreground">Todavía no hay premiaciones definidas.</p>
+    } @else {
+      <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (lider of lideresPorPremiacion(); track lider.id) {
+          <li class="flex flex-col gap-1 rounded-xl bg-muted p-4">
+            <span class="text-sm font-medium text-muted-foreground">{{ lider.nombre }}</span>
+            @if (lider.titulo) {
+              <span class="font-semibold text-foreground">{{ lider.titulo }}</span>
+              <span class="text-xs text-muted-foreground">
+                {{ lider.promedio.toFixed(1) }} / 10 · {{ lider.totalEvaluaciones }} evaluación(es)
+              </span>
+            } @else {
+              <span class="text-sm text-muted-foreground">Sin evaluaciones todavía</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+      <h2 class="font-semibold text-foreground">Avance por juez</h2>
+      @if (porJuez().length === 0) {
+        <p class="text-sm text-muted-foreground">Todavía no hay jueces registrados.</p>
+      } @else {
+        <ul class="flex flex-col gap-4">
+          @for (juez of porJuez(); track juez.id) {
+            <li class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-foreground">{{ juez.nombre }}</span>
+                <span class="text-muted-foreground">{{ juez.evaluados }}/{{ juez.total }}</span>
+              </div>
+              <div
+                class="h-2 w-full overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                [attr.aria-label]="'Progreso de ' + juez.nombre"
+                [attr.aria-valuenow]="juez.evaluados"
+                aria-valuemin="0"
+                [attr.aria-valuemax]="juez.total"
+              >
+                <div class="h-full rounded-full bg-accent transition-[width] duration-300" [style.width.%]="juez.porcentaje"></div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+      <h2 class="font-semibold text-foreground">Avance por cortometraje</h2>
+      @if (porCortometraje().length === 0) {
+        <p class="text-sm text-muted-foreground">Todavía no hay cortometrajes registrados.</p>
+      } @else {
+        <ul class="flex flex-col gap-4">
+          @for (corto of porCortometraje(); track corto.id) {
+            <li class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-foreground">{{ corto.titulo }}</span>
+                <span class="text-muted-foreground">{{ corto.evaluadoPor }}/{{ corto.totalJueces }} jueces</span>
+              </div>
+              <div
+                class="h-2 w-full overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                [attr.aria-label]="'Progreso de ' + corto.titulo"
+                [attr.aria-valuenow]="corto.evaluadoPor"
+                aria-valuemin="0"
+                [attr.aria-valuemax]="corto.totalJueces"
+              >
+                <div class="h-full rounded-full bg-primary transition-[width] duration-300" [style.width.%]="corto.porcentaje"></div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+    <h2 class="font-semibold text-foreground">Actividad reciente</h2>
+    @if (actividadReciente().length === 0) {
+      <p class="text-sm text-muted-foreground">Aún no se ha registrado ninguna evaluación.</p>
+    } @else {
+      <ul class="flex flex-col divide-y divide-border">
+        @for (item of actividadReciente(); track item.id) {
+          <li class="flex items-center justify-between gap-3 py-3 text-sm">
+            <span class="text-foreground">
+              <span class="font-medium">{{ item.jurado }}</span> evaluó <span class="font-medium">{{ item.cortometraje }}</span>
+            </span>
+            <span class="shrink-0 text-muted-foreground">{{ item.fecha }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

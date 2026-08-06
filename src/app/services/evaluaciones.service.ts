@@ -12,6 +12,11 @@ export class EvaluacionesService {
     effect(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._evaluaciones()));
     });
+    window.addEventListener('storage', (evento) => {
+      if (evento.key === STORAGE_KEY) {
+        this._evaluaciones.set(this.leerAlmacenamiento());
+      }
+    });
   }
 
   agregar(datos: {

@@ -7,26 +7,24 @@
 
 <div class="flex min-h-dvh flex-col">
   <header class="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur">
-    <nav
-      class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6"
-      aria-label="Navegación principal"
-    >
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
       <a routerLink="/" class="flex items-center gap-2 text-lg font-semibold text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-md">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-7 shrink-0 text-primary" aria-hidden="true">
           <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
           <path d="M9.5 5.5v13M2.5 9h7M2.5 15h7M14.5 9.5l4 2.5-4 2.5v-5Z" />
         </svg>
-        <span>Cortometrajes LDD</span>
+        <span class="hidden sm:inline">Cortometrajes LDD</span>
+        <span class="sm:hidden">LDD</span>
       </a>
 
-      <ul class="flex flex-wrap items-center gap-1">
+      <ul class="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
         @for (enlace of enlaces(); track enlace.ruta) {
           <li>
             <a
               [routerLink]="enlace.ruta"
               routerLinkActive
               #rla="routerLinkActive"
-              class="block cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              class="block cursor-pointer rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               [class]="rla.isActive ? 'bg-primary text-primary-content' : 'text-foreground hover:bg-muted'"
             >
               {{ enlace.etiqueta }}
@@ -35,13 +33,13 @@
         }
       </ul>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5">
         <button
           type="button"
           (click)="tema.alternar()"
           [attr.aria-pressed]="tema.tema() === 'oscuro'"
           [attr.aria-label]="tema.tema() === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
-          class="flex size-10 cursor-pointer items-center justify-center rounded-md text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          class="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           @if (tema.tema() === 'oscuro') {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-5" aria-hidden="true">
@@ -56,22 +54,80 @@
         </button>
 
         @if (auth.usuarioActual(); as usuario) {
-          <div class="flex items-center gap-3 rounded-md border border-border py-1.5 pl-3 pr-1.5">
-            <div class="text-right leading-tight">
-              <p class="text-sm font-medium text-foreground">{{ usuario.nombre }}</p>
-              <p class="text-xs text-muted-foreground capitalize">{{ usuario.rol }}</p>
-            </div>
+          <div class="relative">
             <button
               type="button"
-              (click)="cerrarSesion()"
-              class="flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              (click)="alternarMenuUsuario($event)"
+              aria-haspopup="true"
+              [attr.aria-expanded]="menuUsuarioAbierto()"
+              aria-label="Menú de cuenta"
+              class="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-content transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              Salir
+              {{ iniciales() }}
             </button>
+
+            @if (menuUsuarioAbierto()) {
+              <div
+                (click)="$event.stopPropagation()"
+                class="absolute right-0 top-full z-50 mt-2 w-56 rounded-md border border-border bg-surface p-1.5 shadow-lg"
+              >
+                <div class="px-2.5 py-2 leading-tight">
+                  <p class="truncate text-sm font-medium text-foreground">{{ usuario.nombre }}</p>
+                  <p class="text-xs text-muted-foreground capitalize">{{ usuario.rol }}</p>
+                </div>
+                <hr class="my-1 border-border" />
+                <button
+                  type="button"
+                  (click)="cerrarSesion()"
+                  class="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-2 text-left text-sm font-medium text-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  Salir
+                </button>
+              </div>
+            }
           </div>
         }
+
+        <button
+          type="button"
+          (click)="alternarMenuMovil()"
+          aria-controls="menu-movil"
+          [attr.aria-expanded]="menuMovilAbierto()"
+          [attr.aria-label]="menuMovilAbierto() ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'"
+          class="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden"
+        >
+          @if (menuMovilAbierto()) {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-5" aria-hidden="true">
+              <path d="M5 5l14 14M19 5 5 19" />
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-5" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          }
+        </button>
       </div>
-    </nav>
+    </div>
+
+    @if (menuMovilAbierto()) {
+      <nav id="menu-movil" class="border-t border-border px-4 pb-3 pt-2 sm:px-6 lg:hidden" aria-label="Navegación principal">
+        <ul class="flex flex-col gap-1">
+          @for (enlace of enlaces(); track enlace.ruta) {
+            <li>
+              <a
+                [routerLink]="enlace.ruta"
+                routerLinkActive
+                #rla="routerLinkActive"
+                class="block cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                [class]="rla.isActive ? 'bg-primary text-primary-content' : 'text-foreground hover:bg-muted'"
+              >
+                {{ enlace.etiqueta }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    }
   </header>
 
   <main id="contenido-principal" class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">

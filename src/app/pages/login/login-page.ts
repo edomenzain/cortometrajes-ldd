@@ -39,7 +39,7 @@ export class LoginPage {
       this.error.set('Email o contraseña incorrectos.');
       return;
     }
-    const destino = this.auth.esAdmin() ? '/cortometrajes' : '/evaluar';
+    const destino = this.auth.esAdmin() ? '/dashboard' : '/evaluar';
     this.router.navigateByUrl(destino);
   }
 }

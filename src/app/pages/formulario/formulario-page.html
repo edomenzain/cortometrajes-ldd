@@ -37,7 +37,7 @@
   <div class="flex flex-col gap-5">
     @for (seccion of secciones(); track seccion.id) {
       <section class="rounded-2xl border border-border bg-surface p-5 card-shadow">
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 class="text-lg font-semibold uppercase tracking-wide text-primary">{{ seccion.nombre }}</h2>
           <button
             type="button"
@@ -51,6 +51,46 @@
             Eliminar sección
           </button>
         </div>
+
+        <fieldset class="mt-3 flex flex-col gap-2">
+          <legend class="text-sm font-medium text-foreground">Premiaciones de esta sección</legend>
+          @if (premiaciones().length === 0) {
+            <p class="text-sm text-muted-foreground">Todavía no hay premiaciones definidas.</p>
+          } @else {
+            <div class="flex flex-wrap gap-2">
+              @for (premiacion of premiaciones(); track premiacion.id) {
+                <label
+                  class="group relative flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring"
+                  [class]="
+                    seccion.premiacionIds.includes(premiacion.id)
+                      ? 'border-primary bg-primary text-primary-content'
+                      : 'border-border bg-background text-foreground hover:bg-muted'
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    class="sr-only"
+                    [checked]="seccion.premiacionIds.includes(premiacion.id)"
+                    (change)="alternarPremiacion(seccion.id, premiacion.id, $any($event.target).checked)"
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    class="size-3.5 shrink-0"
+                    [class.opacity-0]="!seccion.premiacionIds.includes(premiacion.id)"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12.5 9.5 17 19 7" />
+                  </svg>
+                  {{ premiacion.nombre }}
+                </label>
+              }
+            </div>
+          }
+        </fieldset>
 
         @if (seccion.criterios.length === 0) {
           <p class="mt-3 text-sm text-muted-foreground">Esta sección no tiene criterios todavía.</p>

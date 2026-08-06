@@ -1,0 +1,54 @@
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Premiaciones</h1>
+    <p class="mt-1 text-sm text-muted-foreground">
+      Define las premiaciones a otorgar. Luego asigna cada sección del formulario a la premiación que evalúa.
+    </p>
+  </div>
+
+  <form
+    (submit)="$event.preventDefault(); agregar(nuevaPremiacion)"
+    class="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow"
+  >
+    <div class="flex min-w-56 flex-1 flex-col gap-1.5">
+      <label for="nueva-premiacion" class="text-sm font-medium text-foreground">Nueva premiación</label>
+      <input
+        #nuevaPremiacion
+        id="nueva-premiacion"
+        type="text"
+        placeholder="Ej. Mejor Fotografía"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+    </div>
+    <button
+      type="submit"
+      class="inline-flex h-11 cursor-pointer items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
+      Agregar premiación
+    </button>
+  </form>
+
+  @if (premiaciones().length === 0) {
+    <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+      Todavía no hay premiaciones definidas.
+    </div>
+  } @else {
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (premiacion of premiaciones(); track premiacion.id) {
+        <li class="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
+          <span class="font-medium text-foreground">{{ premiacion.nombre }}</span>
+          <button
+            type="button"
+            (click)="eliminar(premiacion.id, premiacion.nombre)"
+            aria-label="Eliminar premiación {{ premiacion.nombre }}"
+            class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

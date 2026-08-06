@@ -1,6 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
+import { FormularioService } from '../../services/formulario.service';
+import { PremiacionesService } from '../../services/premiaciones.service';
 
 interface Ranking {
   cortometrajeId: string;
@@ -13,38 +16,84 @@ interface ItemPodio extends Ranking {
   puesto: number;
 }
 
+interface ResultadoPremiacion {
+  id: string;
+  nombre: string;
+  ranking: Ranking[];
+  ganador: Ranking | undefined;
+}
+
 @Component({
   selector: 'app-resultados-page',
   templateUrl: './resultados-page.html',
 })
 export class ResultadosPage {
+  private readonly auth = inject(AuthService);
   private readonly cortometrajes = inject(CortometrajesService);
   private readonly evaluaciones = inject(EvaluacionesService);
+  private readonly formulario = inject(FormularioService);
+  private readonly premiacionesService = inject(PremiacionesService);
 
-  protected readonly ranking = computed<Ranking[]>(() => {
-    const evaluacionesTodas = this.evaluaciones.evaluaciones();
-    return this.cortometrajes
-      .cortometrajes()
-      .map((corto) => {
-        const propias = evaluacionesTodas.filter((e) => e.cortometrajeId === corto.id);
-        const promedios = propias.map((e) => {
-          const valores = Object.values(e.puntuaciones);
-          return valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
-        });
-        const promedio = promedios.length ? promedios.reduce((a, b) => a + b, 0) / promedios.length : 0;
-        return {
-          cortometrajeId: corto.id,
-          titulo: corto.titulo,
-          promedio,
-          totalEvaluaciones: propias.length,
-        };
-      })
-      .sort((a, b) => b.promedio - a.promedio);
-  });
+  protected readonly ranking = computed<Ranking[]>(() =>
+    this.calcularRanking((puntuaciones) => Object.entries(puntuaciones)),
+  );
 
   protected readonly podio = computed<ItemPodio[]>(() =>
     this.ranking()
       .slice(0, 3)
       .map((item, i) => ({ ...item, puesto: i + 1 })),
   );
+
+  private readonly criterioAPremiaciones = computed(() => {
+    const mapa = new Map<string, string[]>();
+    for (const seccion of this.formulario.secciones()) {
+      if (seccion.premiacionIds.length === 0) continue;
+      for (const criterio of seccion.criterios) {
+        mapa.set(criterio.id, seccion.premiacionIds);
+      }
+    }
+    return mapa;
+  });
+
+  protected readonly resultadosPorPremiacion = computed<ResultadoPremiacion[]>(() => {
+    const mapa = this.criterioAPremiaciones();
+    return this.premiacionesService.premiaciones().map((premiacion) => {
+      const ranking = this.calcularRanking((puntuaciones) =>
+        Object.entries(puntuaciones).filter(([criterioId]) => (mapa.get(criterioId) ?? []).includes(premiacion.id)),
+      );
+      return {
+        id: premiacion.id,
+        nombre: premiacion.nombre,
+        ranking,
+        ganador: ranking.find((item) => item.totalEvaluaciones > 0),
+      };
+    });
+  });
+
+  private calcularRanking(
+    filtrarPuntuaciones: (puntuaciones: Record<string, number>) => [string, number][],
+  ): Ranking[] {
+    const usuario = this.auth.usuarioActual();
+    const todas = this.evaluaciones.evaluaciones();
+    const evaluacionesTodas = usuario?.rol === 'admin' ? todas : todas.filter((e) => e.juezId === usuario?.id);
+    return this.cortometrajes
+      .cortometrajes()
+      .map((corto) => {
+        const propias = evaluacionesTodas.filter((e) => e.cortometrajeId === corto.id);
+        const promedios = propias
+          .map((e) => {
+            const valores = filtrarPuntuaciones(e.puntuaciones).map(([, valor]) => valor);
+            return valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : null;
+          })
+          .filter((valor): valor is number => valor !== null);
+        const promedio = promedios.length ? promedios.reduce((a, b) => a + b, 0) / promedios.length : 0;
+        return {
+          cortometrajeId: corto.id,
+          titulo: corto.titulo,
+          promedio,
+          totalEvaluaciones: promedios.length,
+        };
+      })
+      .sort((a, b) => b.promedio - a.promedio);
+  }
 }

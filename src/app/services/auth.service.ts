@@ -37,6 +37,11 @@ export class AuthService {
       if (id) localStorage.setItem(STORAGE_KEY_SESION, id);
       else localStorage.removeItem(STORAGE_KEY_SESION);
     });
+    window.addEventListener('storage', (evento) => {
+      if (evento.key === STORAGE_KEY_USUARIOS) {
+        this._usuarios.set(this.leerUsuarios());
+      }
+    });
     if (this._usuarios().length === 0) {
       this.sembrarAdmin();
     }

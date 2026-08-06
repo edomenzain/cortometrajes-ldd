@@ -12,6 +12,11 @@ export class CortometrajesService {
     effect(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._cortometrajes()));
     });
+    window.addEventListener('storage', (evento) => {
+      if (evento.key === STORAGE_KEY) {
+        this._cortometrajes.set(this.leerAlmacenamiento());
+      }
+    });
   }
 
   agregar(datos: { titulo: string; descripcion: string; youtubeUrl?: string }): void {

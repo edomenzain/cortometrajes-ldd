@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormularioService } from '../../services/formulario.service';
+import { PremiacionesService } from '../../services/premiaciones.service';
 
 @Component({
   selector: 'app-formulario-page',
@@ -7,7 +8,9 @@ import { FormularioService } from '../../services/formulario.service';
 })
 export class FormularioPage {
   private readonly formulario = inject(FormularioService);
+  private readonly premiacionesService = inject(PremiacionesService);
   protected readonly secciones = this.formulario.secciones;
+  protected readonly premiaciones = this.premiacionesService.premiaciones;
 
   protected agregarSeccion(input: HTMLInputElement): void {
     this.formulario.agregarSeccion(input.value);
@@ -27,5 +30,9 @@ export class FormularioPage {
 
   protected eliminarCriterio(seccionId: string, criterioId: string): void {
     this.formulario.eliminarCriterio(seccionId, criterioId);
+  }
+
+  protected alternarPremiacion(seccionId: string, premiacionId: string, seleccionada: boolean): void {
+    this.formulario.alternarPremiacion(seccionId, premiacionId, seleccionada);
   }
 }

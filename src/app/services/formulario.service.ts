@@ -12,6 +12,7 @@ const SECCIONES_INICIALES: Seccion[] = [
       { id: crypto.randomUUID(), texto: 'Los diálogos son creíbles y aportan a la narrativa' },
       { id: crypto.randomUUID(), texto: 'El tema o mensaje se transmite con claridad' },
     ],
+    premiacionIds: [],
   },
   {
     id: crypto.randomUUID(),
@@ -20,6 +21,7 @@ const SECCIONES_INICIALES: Seccion[] = [
       { id: crypto.randomUUID(), texto: 'El ritmo narrativo mantiene el interés del espectador' },
       { id: crypto.randomUUID(), texto: 'La puesta en escena es coherente con la historia' },
     ],
+    premiacionIds: [],
   },
   {
     id: crypto.randomUUID(),
@@ -28,6 +30,7 @@ const SECCIONES_INICIALES: Seccion[] = [
       { id: crypto.randomUUID(), texto: 'Los actores se ven creíbles' },
       { id: crypto.randomUUID(), texto: 'Los actores transmiten bien las expresiones de los personajes' },
     ],
+    premiacionIds: [],
   },
   {
     id: crypto.randomUUID(),
@@ -36,6 +39,7 @@ const SECCIONES_INICIALES: Seccion[] = [
       { id: crypto.randomUUID(), texto: 'La composición de los planos es adecuada' },
       { id: crypto.randomUUID(), texto: 'La iluminación refuerza el tono de la historia' },
     ],
+    premiacionIds: [],
   },
   {
     id: crypto.randomUUID(),
@@ -44,6 +48,7 @@ const SECCIONES_INICIALES: Seccion[] = [
       { id: crypto.randomUUID(), texto: 'El audio se escucha limpio y balanceado' },
       { id: crypto.randomUUID(), texto: 'El montaje mantiene continuidad y buen ritmo' },
     ],
+    premiacionIds: [],
   },
 ];
 
@@ -61,7 +66,10 @@ export class FormularioService {
   agregarSeccion(nombre: string): void {
     const nombreLimpio = nombre.trim();
     if (!nombreLimpio) return;
-    this._secciones.update((lista) => [...lista, { id: crypto.randomUUID(), nombre: nombreLimpio, criterios: [] }]);
+    this._secciones.update((lista) => [
+      ...lista,
+      { id: crypto.randomUUID(), nombre: nombreLimpio, criterios: [], premiacionIds: [] },
+    ]);
   }
 
   eliminarSeccion(seccionId: string): void {
@@ -88,10 +96,32 @@ export class FormularioService {
     );
   }
 
+  alternarPremiacion(seccionId: string, premiacionId: string, seleccionada: boolean): void {
+    this._secciones.update((lista) =>
+      lista.map((s) =>
+        s.id === seccionId
+          ? {
+              ...s,
+              premiacionIds: seleccionada
+                ? [...s.premiacionIds, premiacionId]
+                : s.premiacionIds.filter((id) => id !== premiacionId),
+            }
+          : s,
+      ),
+    );
+  }
+
+  quitarPremiacionDeSecciones(premiacionId: string): void {
+    this._secciones.update((lista) =>
+      lista.map((s) => ({ ...s, premiacionIds: s.premiacionIds.filter((id) => id !== premiacionId) })),
+    );
+  }
+
   private leerAlmacenamiento(): Seccion[] {
     try {
       const crudo = localStorage.getItem(STORAGE_KEY);
-      return crudo ? (JSON.parse(crudo) as Seccion[]) : SECCIONES_INICIALES;
+      const secciones = crudo ? (JSON.parse(crudo) as Seccion[]) : SECCIONES_INICIALES;
+      return secciones.map((s) => ({ ...s, premiacionIds: s.premiacionIds ?? [] }));
     } catch {
       return SECCIONES_INICIALES;
     }

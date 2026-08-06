@@ -4,11 +4,33 @@
     <p class="mt-1 text-sm text-muted-foreground">Promedio general por cortometraje, según todas las evaluaciones registradas.</p>
   </div>
 
+  @if (resultadosPorPremiacion().length > 0) {
+    <section class="flex flex-col gap-4">
+      <h2 class="text-lg font-semibold text-foreground">Resultados por premiación</h2>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (premiacion of resultadosPorPremiacion(); track premiacion.id) {
+          <div class="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5 card-shadow">
+            <p class="text-sm font-medium text-muted-foreground">{{ premiacion.nombre }}</p>
+            @if (premiacion.ganador) {
+              <p class="text-lg font-bold text-foreground">{{ premiacion.ganador.titulo }}</p>
+              <p class="text-sm text-muted-foreground">
+                {{ premiacion.ganador.promedio.toFixed(1) }} / 10 · {{ premiacion.ganador.totalEvaluaciones }} evaluación(es)
+              </p>
+            } @else {
+              <p class="text-sm text-muted-foreground">Todavía sin evaluaciones para esta premiación.</p>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+
   @if (ranking().length === 0) {
     <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
       Aún no hay cortometrajes para mostrar resultados.
     </div>
   } @else {
+    <h2 class="text-lg font-semibold text-foreground">Resultado general</h2>
     @if (podio().length > 0) {
       <ol class="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Podio">
         @for (item of podio(); track item.cortometrajeId) {

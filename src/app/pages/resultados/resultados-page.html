@@ -25,6 +25,48 @@
     </section>
   }
 
+  @if (votosPublicoResultados().length > 0) {
+    <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+      <h2 class="text-lg font-semibold text-foreground">Voto del público ({{ totalVotosPublico() }})</h2>
+      @if (totalVotosPublico() === 0) {
+        <p class="text-sm text-muted-foreground">Todavía no hay votos del público.</p>
+      } @else {
+        <ul class="flex flex-col gap-4">
+          @for (v of votosPublicoResultados(); track v.cortometrajeId; let i = $index) {
+            <li class="flex items-center gap-3">
+              <span
+                class="flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                [class]="i === 0 && v.votos > 0 ? 'bg-accent text-accent-content' : 'bg-muted text-muted-foreground'"
+              >
+                {{ i + 1 }}
+              </span>
+              <div class="flex flex-1 flex-col gap-1.5">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-medium text-foreground">{{ v.titulo }}</span>
+                  <span class="text-muted-foreground">{{ v.votos }} voto(s) · {{ v.porcentaje }}%</span>
+                </div>
+                <div
+                  class="h-2 w-full overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  [attr.aria-label]="'Votos del público de ' + v.titulo"
+                  [attr.aria-valuenow]="v.votos"
+                  aria-valuemin="0"
+                  [attr.aria-valuemax]="totalVotosPublico()"
+                >
+                  <div
+                    class="h-full rounded-full transition-[width] duration-300"
+                    [class]="i === 0 && v.votos > 0 ? 'bg-accent' : 'bg-primary'"
+                    [style.width.%]="v.porcentaje"
+                  ></div>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
   @if (ranking().length === 0) {
     <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
       Aún no hay cortometrajes para mostrar resultados.

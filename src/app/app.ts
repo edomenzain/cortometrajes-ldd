@@ -38,6 +38,7 @@ export class App {
         { ruta: '/formulario', etiqueta: 'Formulario de evaluación' },
         { ruta: '/jueces', etiqueta: 'Jueces' },
         { ruta: '/premiaciones', etiqueta: 'Premiaciones' },
+        { ruta: '/votacion-publico', etiqueta: 'Votación del público' },
         { ruta: '/resultados', etiqueta: 'Resultados' },
       ];
     }

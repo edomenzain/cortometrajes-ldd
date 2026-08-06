@@ -1,11 +1,12 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import { Seccion } from '../models/formulario.model';
 
-const STORAGE_KEY = 'ldd.formulario';
+const COLECCION = 'formulario';
 
-const SECCIONES_INICIALES: Seccion[] = [
+const SECCIONES_INICIALES: Omit<Seccion, 'id'>[] = [
   {
-    id: crypto.randomUUID(),
     nombre: 'Guion e Historia',
     criterios: [
       { id: crypto.randomUUID(), texto: 'La historia tiene un planteamiento, desarrollo y desenlace claros' },
@@ -15,7 +16,6 @@ const SECCIONES_INICIALES: Seccion[] = [
     premiacionIds: [],
   },
   {
-    id: crypto.randomUUID(),
     nombre: 'Dirección',
     criterios: [
       { id: crypto.randomUUID(), texto: 'El ritmo narrativo mantiene el interés del espectador' },
@@ -24,7 +24,6 @@ const SECCIONES_INICIALES: Seccion[] = [
     premiacionIds: [],
   },
   {
-    id: crypto.randomUUID(),
     nombre: 'Actuación',
     criterios: [
       { id: crypto.randomUUID(), texto: 'Los actores se ven creíbles' },
@@ -33,7 +32,6 @@ const SECCIONES_INICIALES: Seccion[] = [
     premiacionIds: [],
   },
   {
-    id: crypto.randomUUID(),
     nombre: 'Fotografía',
     criterios: [
       { id: crypto.randomUUID(), texto: 'La composición de los planos es adecuada' },
@@ -42,7 +40,6 @@ const SECCIONES_INICIALES: Seccion[] = [
     premiacionIds: [],
   },
   {
-    id: crypto.randomUUID(),
     nombre: 'Sonido y Edición',
     criterios: [
       { id: crypto.randomUUID(), texto: 'El audio se escucha limpio y balanceado' },
@@ -54,76 +51,72 @@ const SECCIONES_INICIALES: Seccion[] = [
 
 @Injectable({ providedIn: 'root' })
 export class FormularioService {
-  private readonly _secciones = signal<Seccion[]>(this.leerAlmacenamiento());
+  private readonly _secciones = signal<Seccion[]>([]);
   readonly secciones = this._secciones.asReadonly();
+  private sembrando = false;
 
   constructor() {
-    effect(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._secciones()));
+    this.sembrarSiVacio();
+    onSnapshot(collection(db, COLECCION), (snap) => {
+      this._secciones.set(
+        snap.docs.map((d) => ({ id: d.id, ...d.data(), premiacionIds: d.data()['premiacionIds'] ?? [] }) as Seccion),
+      );
     });
   }
 
   agregarSeccion(nombre: string): void {
     const nombreLimpio = nombre.trim();
     if (!nombreLimpio) return;
-    this._secciones.update((lista) => [
-      ...lista,
-      { id: crypto.randomUUID(), nombre: nombreLimpio, criterios: [], premiacionIds: [] },
-    ]);
+    addDoc(collection(db, COLECCION), { nombre: nombreLimpio, criterios: [], premiacionIds: [] });
   }
 
   eliminarSeccion(seccionId: string): void {
-    this._secciones.update((lista) => lista.filter((s) => s.id !== seccionId));
+    deleteDoc(doc(db, COLECCION, seccionId));
   }
 
   agregarCriterio(seccionId: string, texto: string): void {
     const textoLimpio = texto.trim();
     if (!textoLimpio) return;
-    this._secciones.update((lista) =>
-      lista.map((s) =>
-        s.id === seccionId
-          ? { ...s, criterios: [...s.criterios, { id: crypto.randomUUID(), texto: textoLimpio }] }
-          : s,
-      ),
-    );
+    const seccion = this._secciones().find((s) => s.id === seccionId);
+    if (!seccion) return;
+    updateDoc(doc(db, COLECCION, seccionId), {
+      criterios: [...seccion.criterios, { id: crypto.randomUUID(), texto: textoLimpio }],
+    });
   }
 
   eliminarCriterio(seccionId: string, criterioId: string): void {
-    this._secciones.update((lista) =>
-      lista.map((s) =>
-        s.id === seccionId ? { ...s, criterios: s.criterios.filter((c) => c.id !== criterioId) } : s,
-      ),
-    );
+    const seccion = this._secciones().find((s) => s.id === seccionId);
+    if (!seccion) return;
+    updateDoc(doc(db, COLECCION, seccionId), {
+      criterios: seccion.criterios.filter((c) => c.id !== criterioId),
+    });
   }
 
   alternarPremiacion(seccionId: string, premiacionId: string, seleccionada: boolean): void {
-    this._secciones.update((lista) =>
-      lista.map((s) =>
-        s.id === seccionId
-          ? {
-              ...s,
-              premiacionIds: seleccionada
-                ? [...s.premiacionIds, premiacionId]
-                : s.premiacionIds.filter((id) => id !== premiacionId),
-            }
-          : s,
-      ),
-    );
+    const seccion = this._secciones().find((s) => s.id === seccionId);
+    if (!seccion) return;
+    const premiacionIds = seleccionada
+      ? [...seccion.premiacionIds, premiacionId]
+      : seccion.premiacionIds.filter((id) => id !== premiacionId);
+    updateDoc(doc(db, COLECCION, seccionId), { premiacionIds });
   }
 
   quitarPremiacionDeSecciones(premiacionId: string): void {
-    this._secciones.update((lista) =>
-      lista.map((s) => ({ ...s, premiacionIds: s.premiacionIds.filter((id) => id !== premiacionId) })),
-    );
+    for (const seccion of this._secciones()) {
+      if (!seccion.premiacionIds.includes(premiacionId)) continue;
+      updateDoc(doc(db, COLECCION, seccion.id), {
+        premiacionIds: seccion.premiacionIds.filter((id) => id !== premiacionId),
+      });
+    }
   }
 
-  private leerAlmacenamiento(): Seccion[] {
-    try {
-      const crudo = localStorage.getItem(STORAGE_KEY);
-      const secciones = crudo ? (JSON.parse(crudo) as Seccion[]) : SECCIONES_INICIALES;
-      return secciones.map((s) => ({ ...s, premiacionIds: s.premiacionIds ?? [] }));
-    } catch {
-      return SECCIONES_INICIALES;
+  private async sembrarSiVacio(): Promise<void> {
+    if (this.sembrando) return;
+    this.sembrando = true;
+    const snap = await getDocs(collection(db, COLECCION));
+    if (!snap.empty) return;
+    for (const seccion of SECCIONES_INICIALES) {
+      await addDoc(collection(db, COLECCION), seccion);
     }
   }
 }

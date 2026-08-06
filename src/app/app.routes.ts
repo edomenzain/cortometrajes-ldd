@@ -48,5 +48,15 @@ export const routes: Routes = [
     canActivate: [sesionActiva],
     loadComponent: () => import('./pages/resultados/resultados-page').then((m) => m.ResultadosPage),
   },
+  {
+    path: 'votacion-publico',
+    canActivate: [soloAdmin],
+    loadComponent: () =>
+      import('./pages/votacion-publico/votacion-publico-page').then((m) => m.VotacionPublicoPage),
+  },
+  {
+    path: 'votar',
+    loadComponent: () => import('./pages/votar-publico/votar-publico-page').then((m) => m.VotarPublicoPage),
+  },
   { path: '**', redirectTo: 'resultados' },
 ];

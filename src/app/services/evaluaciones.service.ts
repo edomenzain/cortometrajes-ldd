@@ -1,21 +1,18 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import { Evaluacion } from '../models/evaluacion.model';
 
-const STORAGE_KEY = 'ldd.evaluaciones';
+const COLECCION = 'evaluaciones';
 
 @Injectable({ providedIn: 'root' })
 export class EvaluacionesService {
-  private readonly _evaluaciones = signal<Evaluacion[]>(this.leerAlmacenamiento());
+  private readonly _evaluaciones = signal<Evaluacion[]>([]);
   readonly evaluaciones = this._evaluaciones.asReadonly();
 
   constructor() {
-    effect(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._evaluaciones()));
-    });
-    window.addEventListener('storage', (evento) => {
-      if (evento.key === STORAGE_KEY) {
-        this._evaluaciones.set(this.leerAlmacenamiento());
-      }
+    onSnapshot(collection(db, COLECCION), (snap) => {
+      this._evaluaciones.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Evaluacion));
     });
   }
 
@@ -26,8 +23,7 @@ export class EvaluacionesService {
     puntuaciones: Record<string, number>;
     comentario: string;
   }): void {
-    const nueva: Evaluacion = {
-      id: crypto.randomUUID(),
+    const nueva: Omit<Evaluacion, 'id'> = {
       cortometrajeId: datos.cortometrajeId,
       juezId: datos.juezId,
       jurado: datos.jurado.trim(),
@@ -35,11 +31,11 @@ export class EvaluacionesService {
       comentario: datos.comentario.trim(),
       creadoEn: Date.now(),
     };
-    this._evaluaciones.update((lista) => [...lista, nueva]);
+    addDoc(collection(db, COLECCION), nueva);
   }
 
   eliminar(id: string): void {
-    this._evaluaciones.update((lista) => lista.filter((e) => e.id !== id));
+    deleteDoc(doc(db, COLECCION, id));
   }
 
   porCortometraje(cortometrajeId: string): Evaluacion[] {
@@ -52,14 +48,5 @@ export class EvaluacionesService {
 
   yaEvaluo(juezId: string, cortometrajeId: string): boolean {
     return this._evaluaciones().some((e) => e.juezId === juezId && e.cortometrajeId === cortometrajeId);
-  }
-
-  private leerAlmacenamiento(): Evaluacion[] {
-    try {
-      const crudo = localStorage.getItem(STORAGE_KEY);
-      return crudo ? (JSON.parse(crudo) as Evaluacion[]) : [];
-    } catch {
-      return [];
-    }
   }
 }

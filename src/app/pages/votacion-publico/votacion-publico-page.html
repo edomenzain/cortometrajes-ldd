@@ -1,0 +1,73 @@
+<div class="flex flex-col gap-8">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-foreground">Votación del público</h1>
+      <p class="mt-1 text-sm text-muted-foreground">Escanea el código para votar. Los resultados se actualizan en tiempo real.</p>
+    </div>
+    <div class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted-foreground">
+      <span class="relative flex size-2">
+        <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
+        <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
+      </span>
+      En vivo
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
+    <div class="flex flex-col items-center gap-5 rounded-2xl border border-border bg-surface p-6 text-center card-shadow">
+      <div class="rounded-2xl border border-border bg-background p-3">
+        @if (qrDataUrl(); as qr) {
+          <img [src]="qr" alt="Código QR para votar en {{ urlVotacion }}" width="280" height="280" class="w-full max-w-[240px] rounded-md" />
+        } @else {
+          <div class="flex aspect-square w-full max-w-[240px] items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
+            Generando código…
+          </div>
+        }
+      </div>
+      <div>
+        <p class="text-4xl font-bold tracking-tight text-foreground">{{ totalVotos() }}</p>
+        <p class="text-sm text-muted-foreground">votos recibidos</p>
+      </div>
+    </div>
+
+    <section class="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-6 card-shadow">
+      <h2 class="font-semibold text-foreground">Resultados</h2>
+      @if (resultados().length === 0) {
+        <p class="text-sm text-muted-foreground">Todavía no hay cortometrajes registrados.</p>
+      } @else {
+        <ul class="flex flex-col gap-4">
+          @for (r of resultados(); track r.cortometrajeId; let i = $index) {
+            <li class="flex items-center gap-3">
+              <span
+                class="flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                [class]="i === 0 ? 'bg-accent text-accent-content' : 'bg-muted text-muted-foreground'"
+              >
+                {{ i + 1 }}
+              </span>
+              <div class="flex flex-1 flex-col gap-1.5">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-medium text-foreground">{{ r.titulo }}</span>
+                  <span class="text-muted-foreground">{{ r.votos }} voto(s) · {{ r.porcentaje }}%</span>
+                </div>
+                <div
+                  class="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  [attr.aria-label]="'Votos de ' + r.titulo"
+                  [attr.aria-valuenow]="r.votos"
+                  aria-valuemin="0"
+                  [attr.aria-valuemax]="totalVotos()"
+                >
+                  <div
+                    class="h-full rounded-full transition-[width] duration-300"
+                    [class]="i === 0 ? 'bg-accent' : 'bg-primary'"
+                    [style.width.%]="r.porcentaje"
+                  ></div>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</div>

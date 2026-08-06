@@ -1,49 +1,37 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import { Cortometraje } from '../models/cortometraje.model';
 
-const STORAGE_KEY = 'ldd.cortometrajes';
+const COLECCION = 'cortometrajes';
 
 @Injectable({ providedIn: 'root' })
 export class CortometrajesService {
-  private readonly _cortometrajes = signal<Cortometraje[]>(this.leerAlmacenamiento());
+  private readonly _cortometrajes = signal<Cortometraje[]>([]);
   readonly cortometrajes = this._cortometrajes.asReadonly();
 
   constructor() {
-    effect(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._cortometrajes()));
-    });
-    window.addEventListener('storage', (evento) => {
-      if (evento.key === STORAGE_KEY) {
-        this._cortometrajes.set(this.leerAlmacenamiento());
-      }
+    onSnapshot(collection(db, COLECCION), (snap) => {
+      this._cortometrajes.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Cortometraje));
     });
   }
 
   agregar(datos: { titulo: string; descripcion: string; youtubeUrl?: string }): void {
-    const nuevo: Cortometraje = {
-      id: crypto.randomUUID(),
+    const nuevo: Record<string, unknown> = {
       titulo: datos.titulo.trim(),
       descripcion: datos.descripcion.trim(),
-      youtubeUrl: datos.youtubeUrl?.trim() || undefined,
       creadoEn: Date.now(),
     };
-    this._cortometrajes.update((lista) => [...lista, nuevo]);
+    const youtubeUrl = datos.youtubeUrl?.trim();
+    if (youtubeUrl) nuevo['youtubeUrl'] = youtubeUrl;
+    addDoc(collection(db, COLECCION), nuevo);
   }
 
   eliminar(id: string): void {
-    this._cortometrajes.update((lista) => lista.filter((c) => c.id !== id));
+    deleteDoc(doc(db, COLECCION, id));
   }
 
   porId(id: string): Cortometraje | undefined {
     return this._cortometrajes().find((c) => c.id === id);
-  }
-
-  private leerAlmacenamiento(): Cortometraje[] {
-    try {
-      const crudo = localStorage.getItem(STORAGE_KEY);
-      return crudo ? (JSON.parse(crudo) as Cortometraje[]) : [];
-    } catch {
-      return [];
-    }
   }
 }

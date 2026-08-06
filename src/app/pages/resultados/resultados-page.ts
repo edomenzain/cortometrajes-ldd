@@ -4,6 +4,7 @@ import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { FormularioService } from '../../services/formulario.service';
 import { PremiacionesService } from '../../services/premiaciones.service';
+import { VotosPublicosService } from '../../services/votos-publicos.service';
 
 interface Ranking {
   cortometrajeId: string;
@@ -23,6 +24,13 @@ interface ResultadoPremiacion {
   ganador: Ranking | undefined;
 }
 
+interface VotoPublicoResultado {
+  cortometrajeId: string;
+  titulo: string;
+  votos: number;
+  porcentaje: number;
+}
+
 @Component({
   selector: 'app-resultados-page',
   templateUrl: './resultados-page.html',
@@ -33,6 +41,26 @@ export class ResultadosPage {
   private readonly evaluaciones = inject(EvaluacionesService);
   private readonly formulario = inject(FormularioService);
   private readonly premiacionesService = inject(PremiacionesService);
+  private readonly votosPublicos = inject(VotosPublicosService);
+
+  protected readonly totalVotosPublico = this.votosPublicos.totalVotos;
+
+  protected readonly votosPublicoResultados = computed<VotoPublicoResultado[]>(() => {
+    const conteo = this.votosPublicos.conteoPorCortometraje();
+    const total = this.totalVotosPublico();
+    return this.cortometrajes
+      .cortometrajes()
+      .map((corto) => {
+        const votos = conteo[corto.id] ?? 0;
+        return {
+          cortometrajeId: corto.id,
+          titulo: corto.titulo,
+          votos,
+          porcentaje: total === 0 ? 0 : Math.round((votos / total) * 100),
+        };
+      })
+      .sort((a, b) => b.votos - a.votos);
+  });
 
   protected readonly ranking = computed<Ranking[]>(() =>
     this.calcularRanking((puntuaciones) => Object.entries(puntuaciones)),

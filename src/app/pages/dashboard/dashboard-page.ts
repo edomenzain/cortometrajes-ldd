@@ -4,6 +4,7 @@ import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { FormularioService } from '../../services/formulario.service';
 import { PremiacionesService } from '../../services/premiaciones.service';
+import { VotosPublicosService } from '../../services/votos-publicos.service';
 
 interface ProgresoJuez {
   id: string;
@@ -37,6 +38,13 @@ interface LiderPremiacion {
   totalEvaluaciones: number;
 }
 
+interface VotoPublicoResultado {
+  cortometrajeId: string;
+  titulo: string;
+  votos: number;
+  porcentaje: number;
+}
+
 @Component({
   selector: 'app-dashboard-page',
   templateUrl: './dashboard-page.html',
@@ -47,8 +55,28 @@ export class DashboardPage {
   private readonly evaluaciones = inject(EvaluacionesService);
   private readonly formulario = inject(FormularioService);
   private readonly premiacionesService = inject(PremiacionesService);
+  private readonly votosPublicos = inject(VotosPublicosService);
 
   protected readonly totalPremiaciones = computed(() => this.premiacionesService.premiaciones().length);
+
+  protected readonly totalVotosPublico = this.votosPublicos.totalVotos;
+
+  protected readonly votosPublicoResultados = computed<VotoPublicoResultado[]>(() => {
+    const conteo = this.votosPublicos.conteoPorCortometraje();
+    const total = this.totalVotosPublico();
+    return this.cortometrajes
+      .cortometrajes()
+      .map((corto) => {
+        const votos = conteo[corto.id] ?? 0;
+        return {
+          cortometrajeId: corto.id,
+          titulo: corto.titulo,
+          votos,
+          porcentaje: total === 0 ? 0 : Math.round((votos / total) * 100),
+        };
+      })
+      .sort((a, b) => b.votos - a.votos);
+  });
 
   private readonly criterioAPremiaciones = computed(() => {
     const mapa = new Map<string, string[]>();

@@ -54,20 +54,6 @@
       >
         {{ enviando() ? 'Entrando…' : 'Entrar' }}
       </button>
-
-      <div class="flex flex-col items-center gap-1.5 text-center">
-        <p class="text-xs text-muted-foreground">
-          Admin de prueba: <code class="rounded bg-muted px-1 py-0.5">admin&#64;ldd.mx</code> /
-          <code class="rounded bg-muted px-1 py-0.5">admin123</code> — cámbiala luego de entrar.
-        </p>
-        <button
-          type="button"
-          (click)="autocompletarAdmin()"
-          class="cursor-pointer text-xs font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          Autocompletar (pruebas)
-        </button>
-      </div>
     </form>
   </div>
 </div>

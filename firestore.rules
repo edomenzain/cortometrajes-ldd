@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function esAdmin() {
+      return autenticado() &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    match /usuarios/{userId} {
+      allow read: if autenticado();
+      allow create: if autenticado() && (request.auth.uid == userId || esAdmin());
+      allow update, delete: if esAdmin();
+    }
+
+    match /cortometrajes/{docId} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+
+    match /premiaciones/{docId} {
+      allow read: if autenticado();
+      allow write: if esAdmin();
+    }
+
+    match /formulario/{docId} {
+      allow read: if autenticado();
+      allow write: if esAdmin();
+    }
+
+    match /evaluaciones/{docId} {
+      allow read: if autenticado();
+      allow create: if autenticado() && request.resource.data.juezId == request.auth.uid;
+      allow update, delete: if esAdmin();
+    }
+
+    match /votosPublico/{votanteId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['cortometrajeId', 'creadoEn']) &&
+        request.resource.data.cortometrajeId is string &&
+        request.resource.data.creadoEn is number;
+      allow update: if false;
+      allow delete: if esAdmin();
+    }
+  }
+}

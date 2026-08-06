@@ -1,39 +1,32 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import { Premiacion } from '../models/premiacion.model';
 
-const STORAGE_KEY = 'ldd.premiaciones';
+const COLECCION = 'premiaciones';
 
 @Injectable({ providedIn: 'root' })
 export class PremiacionesService {
-  private readonly _premiaciones = signal<Premiacion[]>(this.leerAlmacenamiento());
+  private readonly _premiaciones = signal<Premiacion[]>([]);
   readonly premiaciones = this._premiaciones.asReadonly();
 
   constructor() {
-    effect(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._premiaciones()));
+    onSnapshot(collection(db, COLECCION), (snap) => {
+      this._premiaciones.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Premiacion));
     });
   }
 
   agregar(nombre: string): void {
     const nombreLimpio = nombre.trim();
     if (!nombreLimpio) return;
-    this._premiaciones.update((lista) => [...lista, { id: crypto.randomUUID(), nombre: nombreLimpio }]);
+    addDoc(collection(db, COLECCION), { nombre: nombreLimpio });
   }
 
   eliminar(id: string): void {
-    this._premiaciones.update((lista) => lista.filter((p) => p.id !== id));
+    deleteDoc(doc(db, COLECCION, id));
   }
 
   porId(id: string): Premiacion | undefined {
     return this._premiaciones().find((p) => p.id === id);
-  }
-
-  private leerAlmacenamiento(): Premiacion[] {
-    try {
-      const crudo = localStorage.getItem(STORAGE_KEY);
-      return crudo ? (JSON.parse(crudo) as Premiacion[]) : [];
-    } catch {
-      return [];
-    }
   }
 }

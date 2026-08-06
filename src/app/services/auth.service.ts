@@ -1,63 +1,57 @@
-import { Injectable, computed, effect, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
+import { deleteApp, initializeApp } from 'firebase/app';
+import {
+  User,
+  createUserWithEmailAndPassword,
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth';
+import { collection, deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { environment } from '../../environments/environment';
+import { auth, db } from '../firebase';
 import { Usuario } from '../models/usuario.model';
 
-const STORAGE_KEY_USUARIOS = 'ldd.usuarios';
-const STORAGE_KEY_SESION = 'ldd.sesion';
-
-const ADMIN_SEMILLA = { nombre: 'Administrador', email: 'admin@ldd.mx', password: 'admin123' };
-
-async function hashear(texto: string): Promise<string> {
-  const datos = new TextEncoder().encode(texto);
-  const buffer = await crypto.subtle.digest('SHA-256', datos);
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
+const COLECCION = 'usuarios';
 
 /**
- * Autenticación local: usuarios y contraseñas (hasheadas) viven en localStorage.
- * Sirve para controlar acceso en un evento sin servidor; no reemplaza un backend real.
+ * Autenticación con Firebase Auth; roles y datos de perfil viven en Firestore (usuarios/{uid}).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly _usuarios = signal<Usuario[]>(this.leerUsuarios());
-  private readonly _sesionId = signal<string | null>(localStorage.getItem(STORAGE_KEY_SESION));
+  private readonly _usuarios = signal<Usuario[]>([]);
+  private readonly _usuarioActual = signal<Usuario | null>(null);
+  private readonly _listo = signal(false);
 
-  readonly usuarioActual = computed(() => this._usuarios().find((u) => u.id === this._sesionId()) ?? null);
+  readonly usuarioActual = this._usuarioActual.asReadonly();
+  readonly listo = this._listo.asReadonly();
   readonly esAdmin = computed(() => this.usuarioActual()?.rol === 'admin');
   readonly esJuez = computed(() => this.usuarioActual()?.rol === 'juez');
   readonly jueces = computed(() => this._usuarios().filter((u) => u.rol === 'juez'));
 
   constructor() {
-    effect(() => {
-      localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(this._usuarios()));
+    onAuthStateChanged(auth, async (usuarioFirebase: User | null) => {
+      this._usuarioActual.set(usuarioFirebase ? await this.leerPerfil(usuarioFirebase.uid) : null);
+      this._listo.set(true);
     });
-    effect(() => {
-      const id = this._sesionId();
-      if (id) localStorage.setItem(STORAGE_KEY_SESION, id);
-      else localStorage.removeItem(STORAGE_KEY_SESION);
+    onSnapshot(collection(db, COLECCION), (snap) => {
+      this._usuarios.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Usuario));
     });
-    window.addEventListener('storage', (evento) => {
-      if (evento.key === STORAGE_KEY_USUARIOS) {
-        this._usuarios.set(this.leerUsuarios());
-      }
-    });
-    if (this._usuarios().length === 0) {
-      this.sembrarAdmin();
-    }
   }
 
   async iniciarSesion(email: string, password: string): Promise<boolean> {
-    const hash = await hashear(password);
-    const correo = email.trim().toLowerCase();
-    const usuario = this._usuarios().find((u) => u.email.toLowerCase() === correo && u.hash === hash);
-    if (!usuario) return false;
-    this._sesionId.set(usuario.id);
-    return true;
+    try {
+      const credencial = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      this._usuarioActual.set(await this.leerPerfil(credencial.user.uid));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   cerrarSesion(): void {
-    this._sesionId.set(null);
+    signOut(auth);
   }
 
   async agregarJuez(datos: { nombre: string; email: string; password: string }): Promise<{ ok: boolean; error?: string }> {
@@ -66,44 +60,34 @@ export class AuthService {
     if (!nombre || !email || datos.password.length < 6) {
       return { ok: false, error: 'Completa nombre, email y una contraseña de al menos 6 caracteres.' };
     }
-    if (this._usuarios().some((u) => u.email.toLowerCase() === email)) {
-      return { ok: false, error: 'Ya existe un usuario con ese email.' };
+
+    // App secundaria: crear un usuario con el SDK cliente inicia sesión con él,
+    // así que se hace en una instancia aparte para no desconectar al admin actual.
+    const appSecundaria = initializeApp(environment.firebase, `secundaria-${Date.now()}`);
+    const authSecundaria = getAuth(appSecundaria);
+    try {
+      const credencial = await createUserWithEmailAndPassword(authSecundaria, email, datos.password);
+      const nuevo: Omit<Usuario, 'id'> = { nombre, email, rol: 'juez', creadoEn: Date.now() };
+      await setDoc(doc(db, COLECCION, credencial.user.uid), nuevo);
+      return { ok: true };
+    } catch (error) {
+      const codigo = (error as { code?: string }).code;
+      if (codigo === 'auth/email-already-in-use') {
+        return { ok: false, error: 'Ya existe un usuario con ese email.' };
+      }
+      return { ok: false, error: 'No se pudo crear el juez.' };
+    } finally {
+      await signOut(authSecundaria);
+      await deleteApp(appSecundaria);
     }
-    const nuevo: Usuario = {
-      id: crypto.randomUUID(),
-      nombre,
-      email,
-      rol: 'juez',
-      hash: await hashear(datos.password),
-      creadoEn: Date.now(),
-    };
-    this._usuarios.update((lista) => [...lista, nuevo]);
-    return { ok: true };
   }
 
   eliminarJuez(id: string): void {
-    this._usuarios.update((lista) => lista.filter((u) => u.id !== id));
-    if (this._sesionId() === id) this._sesionId.set(null);
+    deleteDoc(doc(db, COLECCION, id));
   }
 
-  private async sembrarAdmin(): Promise<void> {
-    const admin: Usuario = {
-      id: crypto.randomUUID(),
-      nombre: ADMIN_SEMILLA.nombre,
-      email: ADMIN_SEMILLA.email,
-      rol: 'admin',
-      hash: await hashear(ADMIN_SEMILLA.password),
-      creadoEn: Date.now(),
-    };
-    this._usuarios.set([admin]);
-  }
-
-  private leerUsuarios(): Usuario[] {
-    try {
-      const crudo = localStorage.getItem(STORAGE_KEY_USUARIOS);
-      return crudo ? (JSON.parse(crudo) as Usuario[]) : [];
-    } catch {
-      return [];
-    }
+  private async leerPerfil(uid: string): Promise<Usuario | null> {
+    const snap = await getDoc(doc(db, COLECCION, uid));
+    return snap.exists() ? ({ id: snap.id, ...snap.data() } as Usuario) : null;
   }
 }

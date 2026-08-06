@@ -5,6 +5,5 @@ export interface Usuario {
   nombre: string;
   email: string;
   rol: Rol;
-  hash: string;
   creadoEn: number;
 }

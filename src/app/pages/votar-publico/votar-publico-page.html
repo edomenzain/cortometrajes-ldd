@@ -1,0 +1,45 @@
+<div class="mx-auto flex max-w-xl flex-col gap-8">
+  <div class="text-center">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Vota por tu cortometraje favorito</h1>
+    <p class="mt-1 text-sm text-muted-foreground">Solo puedes votar una vez.</p>
+  </div>
+
+  @if (yaVoto()) {
+    <div class="flex flex-col items-center gap-3 rounded-2xl border border-accent bg-accent/5 p-10 text-center card-shadow">
+      <span class="flex size-14 items-center justify-center rounded-full bg-accent text-accent-content">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-7" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.5" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 12.5l2.5 2.5 5.5-6" />
+        </svg>
+      </span>
+      <p class="text-lg font-semibold text-foreground">¡Gracias por votar!</p>
+      @if (cortometrajes().find((c) => c.id === miVoto()?.cortometrajeId); as corto) {
+        <p class="text-sm text-muted-foreground">Votaste por <span class="font-medium text-foreground">{{ corto.titulo }}</span></p>
+      }
+    </div>
+  } @else if (cortometrajes().length === 0) {
+    <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+      Todavía no hay cortometrajes para votar.
+    </div>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (corto of cortometrajes(); track corto.id; let i = $index) {
+        <li>
+          <button
+            type="button"
+            (click)="votar(corto.id)"
+            class="flex w-full cursor-pointer items-start gap-4 rounded-2xl border border-border bg-surface p-5 text-left card-shadow transition-all duration-150 hover:-translate-y-0.5 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+              {{ i + 1 }}
+            </span>
+            <span class="flex flex-col gap-1">
+              <span class="font-semibold text-foreground">{{ corto.titulo }}</span>
+              <span class="line-clamp-2 text-sm text-muted-foreground">{{ corto.descripcion }}</span>
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

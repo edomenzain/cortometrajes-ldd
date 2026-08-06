@@ -21,10 +21,6 @@ export class LoginPage {
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected autocompletarAdmin(): void {
-    this.modelo.set({ email: 'admin@ldd.mx', password: 'admin123' });
-  }
-
   protected async iniciarSesion(): Promise<void> {
     if (!this.f().valid()) {
       this.f().markAsTouched();

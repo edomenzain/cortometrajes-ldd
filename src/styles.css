@@ -1,3 +1,95 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #fafafb;
+  --surface: #ffffff;
+  --surface-2: #f4f4f7;
+  --fg: #0f172a;
+  --muted: #f1f3f5;
+  --muted-fg: #64748b;
+  --border: #e4e7eb;
+  --primary: #4f46e5;
+  --primary-content: #ffffff;
+  --secondary: #2563eb;
+  --accent: #059669;
+  --accent-content: #ffffff;
+  --destructive: #dc2626;
+  --destructive-content: #ffffff;
+  --ring: #4f46e5;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.12);
+  --gradient-hero: linear-gradient(135deg, #eef2ff 0%, #fafafb 60%);
+}
+
+:root[data-theme='dark'] {
+  --bg: #0b0b0f;
+  --surface: #15151c;
+  --surface-2: #1c1c25;
+  --fg: #f5f5f7;
+  --muted: #1f1f29;
+  --muted-fg: #a1a1ad;
+  --border: #2a2a36;
+  --primary: #8b7cff;
+  --primary-content: #0b0b0f;
+  --secondary: #7dd3fc;
+  --accent: #f5b942;
+  --accent-content: #0b0b0f;
+  --destructive: #f87171;
+  --destructive-content: #1a0a0a;
+  --ring: #8b7cff;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.55);
+  --gradient-hero: linear-gradient(135deg, #191933 0%, #0b0b0f 60%);
+}
+
+@theme inline {
+  --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-primary: var(--primary);
+  --color-primary-content: var(--primary-content);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-accent-content: var(--accent-content);
+  --color-background: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--fg);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-fg);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-content: var(--destructive-content);
+  --color-ring: var(--ring);
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+.card-shadow {
+  box-shadow: var(--shadow-card);
+}
+
+.hero-gradient {
+  background-image: var(--gradient-hero);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,100 @@
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Cortometrajes</h1>
+    <p class="mt-1 text-sm text-muted-foreground">
+      Agrega los cortometrajes que serán evaluados por los jueces.
+    </p>
+  </div>
+
+  <form
+    (submit)="$event.preventDefault(); guardar()"
+    class="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-6 card-shadow"
+  >
+    <div class="flex flex-col gap-1.5">
+      <label for="titulo" class="text-sm font-medium text-foreground">
+        Título <span class="text-destructive" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="titulo"
+        type="text"
+        [formField]="f.titulo"
+        autocomplete="off"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+      @if (f.titulo().touched() && f.titulo().errors().length > 0) {
+        <p class="text-sm text-destructive" role="alert">El título es obligatorio.</p>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="descripcion" class="text-sm font-medium text-foreground">
+        Descripción <span class="text-destructive" aria-hidden="true">*</span>
+      </label>
+      <textarea
+        id="descripcion"
+        rows="3"
+        [formField]="f.descripcion"
+        class="rounded-md border border-border bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      ></textarea>
+      @if (f.descripcion().touched() && f.descripcion().errors().length > 0) {
+        <p class="text-sm text-destructive" role="alert">La descripción es obligatoria.</p>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="youtube" class="text-sm font-medium text-foreground">Video de YouTube (opcional)</label>
+      <input
+        id="youtube"
+        type="url"
+        placeholder="https://youtube.com/watch?v=..."
+        [formField]="f.youtubeUrl"
+        autocomplete="off"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+      <p class="text-sm text-muted-foreground">Pega el enlace completo del video.</p>
+    </div>
+
+    <button
+      type="submit"
+      class="mt-1 inline-flex h-11 w-fit cursor-pointer items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
+      Agregar cortometraje
+    </button>
+  </form>
+
+  @if (lista().length === 0) {
+    <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+      Todavía no hay cortometrajes registrados.
+    </div>
+  } @else {
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (corto of lista(); track corto.id) {
+        <li class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow transition-transform duration-150 hover:-translate-y-0.5">
+          @if (urlEmbed(corto.youtubeUrl); as videoUrl) {
+            <div class="aspect-video overflow-hidden rounded-md bg-muted">
+              <iframe
+                class="size-full"
+                [src]="videoUrl"
+                title="Video de {{ corto.titulo }}"
+                loading="lazy"
+                allowfullscreen
+              ></iframe>
+            </div>
+          }
+          <h2 class="font-semibold text-foreground">{{ corto.titulo }}</h2>
+          <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
+          <button
+            type="button"
+            (click)="eliminar(corto.id)"
+            class="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-destructive transition-colors duration-150 hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+              <path d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />
+            </svg>
+            Eliminar
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -1,0 +1,131 @@
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Jueces</h1>
+    <p class="mt-1 text-sm text-muted-foreground">
+      Agrega a los jueces que evaluarán los cortometrajes y da seguimiento a su progreso.
+    </p>
+  </div>
+
+  <form
+    (submit)="$event.preventDefault(); agregar()"
+    class="grid grid-cols-1 gap-5 rounded-2xl border border-border bg-surface p-6 card-shadow sm:grid-cols-3"
+  >
+    <div class="flex flex-col gap-1.5">
+      <label for="nombre" class="text-sm font-medium text-foreground">
+        Nombre <span class="text-destructive" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="nombre"
+        type="text"
+        [formField]="f.nombre"
+        autocomplete="off"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+      @if (f.nombre().touched() && f.nombre().errors().length > 0) {
+        <p class="text-sm text-destructive" role="alert">El nombre es obligatorio.</p>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="email" class="text-sm font-medium text-foreground">
+        Email <span class="text-destructive" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="email"
+        type="email"
+        [formField]="f.email"
+        autocomplete="off"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+      @if (f.email().touched() && f.email().errors().length > 0) {
+        <p class="text-sm text-destructive" role="alert">El email es obligatorio.</p>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="password" class="text-sm font-medium text-foreground">
+        Contraseña <span class="text-destructive" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="password"
+        type="password"
+        [formField]="f.password"
+        autocomplete="off"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+      @if (f.password().touched() && f.password().errors().length > 0) {
+        <p class="text-sm text-destructive" role="alert">La contraseña es obligatoria.</p>
+      }
+    </div>
+
+    @if (error()) {
+      <p class="sm:col-span-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+        {{ error() }}
+      </p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="enviando()"
+      class="inline-flex h-11 w-fit cursor-pointer items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-3"
+    >
+      {{ enviando() ? 'Agregando…' : 'Agregar juez' }}
+    </button>
+  </form>
+
+  @if (filas().length === 0) {
+    <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+      Todavía no hay jueces registrados.
+    </div>
+  } @else {
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (juez of filas(); track juez.id) {
+        <li class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow transition-transform duration-150 hover:-translate-y-0.5">
+          <div>
+            <h2 class="font-semibold text-foreground">{{ juez.nombre }}</h2>
+            <p class="text-sm text-muted-foreground">{{ juez.email }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-muted-foreground">Progreso</span>
+              <span class="font-medium text-foreground">{{ juez.evaluados }}/{{ juez.total }}</span>
+            </div>
+            <div
+              class="h-2 w-full overflow-hidden rounded-full bg-muted"
+              role="progressbar"
+              [attr.aria-label]="'Progreso de ' + juez.nombre"
+              [attr.aria-valuenow]="juez.evaluados"
+              aria-valuemin="0"
+              [attr.aria-valuemax]="juez.total"
+            >
+              <div
+                class="h-full rounded-full bg-accent transition-[width] duration-300"
+                [style.width.%]="juez.total === 0 ? 0 : (juez.evaluados / juez.total) * 100"
+              ></div>
+            </div>
+          </div>
+
+          @if (juez.pendientes.length > 0) {
+            <p class="text-xs text-muted-foreground">
+              Pendientes: {{ juez.pendientes.join(', ') }}
+            </p>
+          } @else if (juez.total > 0) {
+            <p class="text-xs font-medium text-accent">Completó todas las evaluaciones.</p>
+          }
+
+          <button
+            type="button"
+            (click)="eliminar(juez.id, juez.nombre)"
+            class="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-destructive transition-colors duration-150 hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+              <path d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />
+            </svg>
+            Eliminar
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

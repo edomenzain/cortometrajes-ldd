@@ -1,0 +1,36 @@
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Evaluar cortometrajes</h1>
+    <p class="mt-1 text-sm text-muted-foreground">Elige un cortometraje para registrar tu evaluación como jurado.</p>
+  </div>
+
+  @if (lista().length === 0) {
+    <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+      Todavía no hay cortometrajes registrados.
+    </div>
+  } @else {
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (corto of lista(); track corto.id) {
+        <li>
+          <a
+            [routerLink]="['/evaluar', corto.id]"
+            class="flex h-full cursor-pointer flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow transition-transform duration-150 hover:-translate-y-0.5 hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <h2 class="font-semibold text-foreground">{{ corto.titulo }}</h2>
+              @if (yaEvaluado(corto.id)) {
+                <span class="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">Evaluado</span>
+              } @else {
+                <span class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Pendiente</span>
+              }
+            </div>
+            <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
+            <span class="mt-auto text-sm font-medium text-primary">
+              {{ totalEvaluaciones(corto.id) }} evaluación(es) registrada(s)
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>

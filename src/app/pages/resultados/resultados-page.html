@@ -1,0 +1,73 @@
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Resultados</h1>
+    <p class="mt-1 text-sm text-muted-foreground">Promedio general por cortometraje, según todas las evaluaciones registradas.</p>
+  </div>
+
+  @if (ranking().length === 0) {
+    <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+      Aún no hay cortometrajes para mostrar resultados.
+    </div>
+  } @else {
+    @if (podio().length > 0) {
+      <ol class="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Podio">
+        @for (item of podio(); track item.cortometrajeId) {
+          <li
+            class="flex flex-col items-center gap-2 rounded-2xl border p-6 text-center card-shadow"
+            [class]="
+              item.puesto === 1
+                ? 'border-accent bg-accent/5 sm:order-2 sm:-translate-y-3'
+                : item.puesto === 2
+                  ? 'border-border bg-surface sm:order-1'
+                  : 'border-border bg-surface sm:order-3'
+            "
+          >
+            <span
+              class="flex size-11 items-center justify-center rounded-full text-base font-bold"
+              [class]="
+                item.puesto === 1
+                  ? 'bg-accent text-accent-content'
+                  : item.puesto === 2
+                    ? 'bg-muted text-foreground'
+                    : 'bg-muted text-foreground'
+              "
+            >
+              {{ item.puesto }}
+            </span>
+            <p class="font-semibold text-foreground">{{ item.titulo }}</p>
+            <p class="text-2xl font-bold text-foreground">{{ item.promedio.toFixed(1) }}</p>
+            <p class="text-xs text-muted-foreground">{{ item.totalEvaluaciones }} evaluación(es)</p>
+          </li>
+        }
+      </ol>
+    }
+
+    <div class="overflow-x-auto rounded-2xl border border-border bg-surface card-shadow">
+      <table class="w-full text-left text-sm">
+        <caption class="sr-only">Ranking completo de cortometrajes por promedio</caption>
+        <thead>
+          <tr class="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+            <th scope="col" class="px-5 py-3 font-medium">#</th>
+            <th scope="col" class="px-5 py-3 font-medium">Cortometraje</th>
+            <th scope="col" class="px-5 py-3 font-medium">Evaluaciones</th>
+            <th scope="col" class="px-5 py-3 text-right font-medium">Promedio</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of ranking(); track item.cortometrajeId; let i = $index) {
+            <tr class="border-b border-border last:border-0">
+              <td class="px-5 py-3 text-muted-foreground">{{ i + 1 }}</td>
+              <td class="px-5 py-3 font-medium text-foreground">{{ item.titulo }}</td>
+              <td class="px-5 py-3 text-muted-foreground">{{ item.totalEvaluaciones }}</td>
+              <td class="px-5 py-3 text-right">
+                <span class="inline-flex rounded-md bg-primary px-3 py-1 text-sm font-semibold text-primary-content">
+                  {{ item.promedio.toFixed(1) }} / 10
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

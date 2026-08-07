@@ -16,6 +16,17 @@
         </li>
       }
     </ul>
+  } @else if (!abierta()) {
+    <div class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center card-shadow">
+      <span class="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-7" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.5" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4.5l3 2" />
+        </svg>
+      </span>
+      <p class="text-lg font-semibold text-foreground">La votación aún no ha comenzado</p>
+      <p class="text-sm text-muted-foreground">Espera a que el organizador inicie la votación.</p>
+    </div>
   } @else if (yaVoto()) {
     <div class="flex flex-col items-center gap-3 rounded-2xl border border-accent bg-accent/5 p-10 text-center card-shadow">
       <span class="flex size-14 items-center justify-center rounded-full bg-accent text-accent-content">

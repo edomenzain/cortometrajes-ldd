@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { VotosPublicosService } from '../../services/votos-publicos.service';
 import { Skeleton } from '../../shared/skeleton';
+import { ConfirmService } from '../../shared/confirm.service';
 
 interface ResultadoVoto {
   cortometrajeId: string;
@@ -19,11 +20,14 @@ interface ResultadoVoto {
 export class VotacionPublicoPage {
   private readonly cortometrajes = inject(CortometrajesService);
   private readonly votosPublicos = inject(VotosPublicosService);
+  private readonly confirmar = inject(ConfirmService);
 
   protected readonly cargando = computed(() => this.cortometrajes.cargando() || this.votosPublicos.cargando());
   protected readonly filasEsqueleto = [0, 1, 2, 3];
 
   protected readonly totalVotos = this.votosPublicos.totalVotos;
+  protected readonly abierta = this.votosPublicos.abierta;
+  protected readonly cambiandoEstado = signal(false);
   protected readonly urlVotacion = `${location.origin}${location.pathname}#/votar`;
   protected readonly qrDataUrl = signal<string | null>(null);
 
@@ -46,5 +50,25 @@ export class VotacionPublicoPage {
 
   constructor() {
     QRCode.toDataURL(this.urlVotacion, { width: 320, margin: 1 }).then((url) => this.qrDataUrl.set(url));
+  }
+
+  protected async alternarVotacion(): Promise<void> {
+    const abriendo = !this.abierta();
+    const confirmado = await this.confirmar.pedir(
+      abriendo ? '¿Iniciar la votación del público?' : '¿Detener la votación del público? Nadie podrá votar hasta que la reinicies.',
+      { textoAceptar: abriendo ? 'Iniciar' : 'Detener', destructivo: !abriendo },
+    );
+    if (!confirmado) return;
+
+    this.cambiandoEstado.set(true);
+    try {
+      if (abriendo) {
+        await this.votosPublicos.iniciarVotacion();
+      } else {
+        await this.votosPublicos.detenerVotacion();
+      }
+    } finally {
+      this.cambiandoEstado.set(false);
+    }
   }
 }

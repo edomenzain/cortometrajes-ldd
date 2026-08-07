@@ -43,9 +43,15 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.resource.data.keys().hasOnly(['cortometrajeId', 'creadoEn']) &&
         request.resource.data.cortometrajeId is string &&
-        request.resource.data.creadoEn is number;
+        request.resource.data.creadoEn is number &&
+        get(/databases/$(database)/documents/configuracion/votacion).data.abierta == true;
       allow update: if false;
       allow delete: if esAdmin();
+    }
+
+    match /configuracion/{docId} {
+      allow read: if true;
+      allow write: if esAdmin();
     }
   }
 }

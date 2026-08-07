@@ -21,6 +21,7 @@ export class VotarPublicoPage {
 
   protected readonly yaVoto = this.votosPublicosService.yaVoto;
   protected readonly miVoto = this.votosPublicosService.miVoto;
+  protected readonly abierta = this.votosPublicosService.abierta;
 
   protected async votar(cortometrajeId: string, titulo: string): Promise<void> {
     const confirmado = await this.confirmar.pedir(`¿Seguro que quieres votar por "${titulo}"? No podrás cambiar tu voto.`, {

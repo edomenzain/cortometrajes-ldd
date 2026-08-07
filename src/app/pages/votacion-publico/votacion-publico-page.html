@@ -4,12 +4,31 @@
       <h1 class="text-2xl font-semibold tracking-tight text-foreground">Votación del público</h1>
       <p class="mt-1 text-sm text-muted-foreground">Escanea el código para votar. Los resultados se actualizan en tiempo real.</p>
     </div>
-    <div class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted-foreground">
-      <span class="relative flex size-2">
-        <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
-        <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
-      </span>
-      En vivo
+    <div class="flex items-center gap-3">
+      <div
+        class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium"
+        [class]="abierta() ? 'text-muted-foreground' : 'text-muted-foreground'"
+      >
+        @if (abierta()) {
+          <span class="relative flex size-2">
+            <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
+            <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
+          </span>
+          Votación abierta
+        } @else {
+          <span class="relative inline-flex size-2 rounded-full bg-muted-foreground"></span>
+          Votación cerrada
+        }
+      </div>
+      <button
+        type="button"
+        (click)="alternarVotacion()"
+        [disabled]="cambiandoEstado()"
+        class="cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
+        [class]="abierta() ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-accent text-accent-content hover:bg-accent/90'"
+      >
+        {{ abierta() ? 'Detener votación' : 'Iniciar votación' }}
+      </button>
     </div>
   </div>
 

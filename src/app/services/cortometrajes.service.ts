@@ -1,14 +1,20 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Cortometraje } from '../models/cortometraje.model';
+import { PeriodosService } from './periodos.service';
 
 const COLECCION = 'cortometrajes';
 
 @Injectable({ providedIn: 'root' })
 export class CortometrajesService {
+  private readonly periodos = inject(PeriodosService);
+
   private readonly _cortometrajes = signal<Cortometraje[]>([]);
-  readonly cortometrajes = this._cortometrajes.asReadonly();
+  readonly cortometrajes = computed(() => {
+    const periodoId = this.periodos.seleccionado()?.id;
+    return this._cortometrajes().filter((c) => c.periodoId === periodoId);
+  });
 
   private readonly _cargando = signal(true);
   readonly cargando = this._cargando.asReadonly();
@@ -28,9 +34,12 @@ export class CortometrajesService {
   }
 
   agregar(datos: { titulo: string; descripcion: string; youtubeUrl?: string }): void {
+    const periodoId = this.periodos.seleccionado()?.id;
+    if (!periodoId) return;
     const nuevo: Record<string, unknown> = {
       titulo: datos.titulo.trim(),
       descripcion: datos.descripcion.trim(),
+      periodoId,
       creadoEn: Date.now(),
     };
     const youtubeUrl = datos.youtubeUrl?.trim();

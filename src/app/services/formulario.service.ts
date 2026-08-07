@@ -1,11 +1,12 @@
-import { Injectable, signal } from '@angular/core';
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, updateDoc } from 'firebase/firestore';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Seccion } from '../models/formulario.model';
+import { PeriodosService } from './periodos.service';
 
 const COLECCION = 'formulario';
 
-const SECCIONES_INICIALES: Omit<Seccion, 'id'>[] = [
+const SECCIONES_INICIALES: Omit<Seccion, 'id' | 'periodoId'>[] = [
   {
     nombre: 'Guion e Historia',
     criterios: [
@@ -51,15 +52,20 @@ const SECCIONES_INICIALES: Omit<Seccion, 'id'>[] = [
 
 @Injectable({ providedIn: 'root' })
 export class FormularioService {
+  private readonly periodos = inject(PeriodosService);
+
   private readonly _secciones = signal<Seccion[]>([]);
-  readonly secciones = this._secciones.asReadonly();
-  private sembrando = false;
+  readonly secciones = computed(() => {
+    const periodoId = this.periodos.seleccionado()?.id;
+    return this._secciones().filter((s) => s.periodoId === periodoId);
+  });
+
+  private readonly sembrados = new Set<string>();
 
   private readonly _cargando = signal(true);
   readonly cargando = this._cargando.asReadonly();
 
   constructor() {
-    this.sembrarSiVacio();
     onSnapshot(
       collection(db, COLECCION),
       (snap) => {
@@ -73,12 +79,18 @@ export class FormularioService {
         this._cargando.set(false);
       },
     );
+
+    effect(() => {
+      const periodoId = this.periodos.seleccionado()?.id;
+      if (periodoId) this.sembrarSiVacio(periodoId);
+    });
   }
 
   agregarSeccion(nombre: string): void {
+    const periodoId = this.periodos.seleccionado()?.id;
     const nombreLimpio = nombre.trim();
-    if (!nombreLimpio) return;
-    addDoc(collection(db, COLECCION), { nombre: nombreLimpio, criterios: [], premiacionIds: [] });
+    if (!nombreLimpio || !periodoId) return;
+    addDoc(collection(db, COLECCION), { nombre: nombreLimpio, criterios: [], premiacionIds: [], periodoId });
   }
 
   eliminarSeccion(seccionId: string): void {
@@ -121,13 +133,13 @@ export class FormularioService {
     }
   }
 
-  private async sembrarSiVacio(): Promise<void> {
-    if (this.sembrando) return;
-    this.sembrando = true;
-    const snap = await getDocs(collection(db, COLECCION));
+  private async sembrarSiVacio(periodoId: string): Promise<void> {
+    if (this.sembrados.has(periodoId)) return;
+    this.sembrados.add(periodoId);
+    const snap = await getDocs(query(collection(db, COLECCION), where('periodoId', '==', periodoId)));
     if (!snap.empty) return;
     for (const seccion of SECCIONES_INICIALES) {
-      await addDoc(collection(db, COLECCION), seccion);
+      await addDoc(collection(db, COLECCION), { ...seccion, periodoId });
     }
   }
 }

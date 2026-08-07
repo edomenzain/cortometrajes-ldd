@@ -18,6 +18,11 @@ service cloud.firestore {
       allow update, delete: if esAdmin();
     }
 
+    match /periodos/{docId} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+
     match /cortometrajes/{docId} {
       allow read: if true;
       allow write: if esAdmin();
@@ -39,17 +44,19 @@ service cloud.firestore {
       allow update, delete: if esAdmin();
     }
 
-    match /votosPublico/{votanteId} {
+    match /votosPublico/{docId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['cortometrajeId', 'creadoEn']) &&
+      allow create: if request.resource.data.keys().hasOnly(['periodoId', 'votanteId', 'cortometrajeId', 'creadoEn']) &&
+        request.resource.data.periodoId is string &&
+        request.resource.data.votanteId is string &&
         request.resource.data.cortometrajeId is string &&
         request.resource.data.creadoEn is number &&
-        get(/databases/$(database)/documents/configuracion/votacion).data.abierta == true;
+        get(/databases/$(database)/documents/configuracionVotacion/$(request.resource.data.periodoId)).data.abierta == true;
       allow update: if false;
       allow delete: if esAdmin();
     }
 
-    match /configuracion/{docId} {
+    match /configuracionVotacion/{docId} {
       allow read: if true;
       allow write: if esAdmin();
     }

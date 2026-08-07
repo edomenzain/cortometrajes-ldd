@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from './services/auth.service';
+import { PeriodosService } from './services/periodos.service';
 import { TemaService } from './services/tema.service';
 import { ConfirmDialog } from './shared/confirm-dialog';
 
@@ -16,6 +17,7 @@ import { ConfirmDialog } from './shared/confirm-dialog';
 export class App {
   protected readonly auth = inject(AuthService);
   protected readonly tema = inject(TemaService);
+  protected readonly periodos = inject(PeriodosService);
   private readonly router = inject(Router);
 
   protected readonly menuMovilAbierto = signal(false);
@@ -35,6 +37,7 @@ export class App {
     if (this.auth.esAdmin()) {
       return [
         { ruta: '/dashboard', etiqueta: 'Panel' },
+        { ruta: '/periodos', etiqueta: 'Periodos' },
         { ruta: '/cortometrajes', etiqueta: 'Cortometrajes' },
         { ruta: '/formulario', etiqueta: 'Formulario de evaluación' },
         { ruta: '/jueces', etiqueta: 'Jueces' },
@@ -70,6 +73,11 @@ export class App {
 
   protected cerrarMenuUsuario(): void {
     this.menuUsuarioAbierto.set(false);
+  }
+
+  protected cambiarPeriodo(evento: Event): void {
+    const id = (evento.target as HTMLSelectElement).value;
+    if (id) this.periodos.seleccionar(id);
   }
 
   protected async cerrarSesion(): Promise<void> {

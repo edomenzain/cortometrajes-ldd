@@ -1,5 +1,6 @@
 export interface Evaluacion {
   id: string;
+  periodoId: string;
   cortometrajeId: string;
   juezId: string;
   jurado: string;

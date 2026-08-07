@@ -1,14 +1,20 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Evaluacion } from '../models/evaluacion.model';
+import { PeriodosService } from './periodos.service';
 
 const COLECCION = 'evaluaciones';
 
 @Injectable({ providedIn: 'root' })
 export class EvaluacionesService {
+  private readonly periodos = inject(PeriodosService);
+
   private readonly _evaluaciones = signal<Evaluacion[]>([]);
-  readonly evaluaciones = this._evaluaciones.asReadonly();
+  readonly evaluaciones = computed(() => {
+    const periodoId = this.periodos.seleccionado()?.id;
+    return this._evaluaciones().filter((e) => e.periodoId === periodoId);
+  });
 
   private readonly _cargando = signal(true);
   readonly cargando = this._cargando.asReadonly();
@@ -34,7 +40,10 @@ export class EvaluacionesService {
     puntuaciones: Record<string, number>;
     comentario: string;
   }): void {
+    const periodoId = this.periodos.seleccionado()?.id;
+    if (!periodoId) return;
     const nueva: Omit<Evaluacion, 'id'> = {
+      periodoId,
       cortometrajeId: datos.cortometrajeId,
       juezId: datos.juezId,
       jurado: datos.jurado.trim(),
@@ -50,14 +59,14 @@ export class EvaluacionesService {
   }
 
   porCortometraje(cortometrajeId: string): Evaluacion[] {
-    return this._evaluaciones().filter((e) => e.cortometrajeId === cortometrajeId);
+    return this.evaluaciones().filter((e) => e.cortometrajeId === cortometrajeId);
   }
 
   porJuez(juezId: string): Evaluacion[] {
-    return this._evaluaciones().filter((e) => e.juezId === juezId);
+    return this.evaluaciones().filter((e) => e.juezId === juezId);
   }
 
   yaEvaluo(juezId: string, cortometrajeId: string): boolean {
-    return this._evaluaciones().some((e) => e.juezId === juezId && e.cortometrajeId === cortometrajeId);
+    return this.evaluaciones().some((e) => e.juezId === juezId && e.cortometrajeId === cortometrajeId);
   }
 }

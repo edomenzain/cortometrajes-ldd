@@ -17,7 +17,7 @@
         <span class="sm:hidden">LDD</span>
       </a>
 
-      <ul class="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
+      <ul class="hidden items-center gap-1 xl:flex" aria-label="Navegación principal">
         @for (enlace of enlaces(); track enlace.ruta) {
           <li>
             <a
@@ -75,6 +75,22 @@
                   <p class="truncate text-sm font-medium text-foreground">{{ usuario.nombre }}</p>
                   <p class="text-xs text-muted-foreground capitalize">{{ usuario.rol }}</p>
                 </div>
+                @if (auth.esAdmin() && periodos.ordenados().length > 0) {
+                  <hr class="my-1 border-border" />
+                  <div class="px-2.5 py-1.5">
+                    <label class="mb-1 block text-xs font-medium text-muted-foreground" for="selector-periodo">Periodo</label>
+                    <select
+                      id="selector-periodo"
+                      [value]="periodos.seleccionado()?.id"
+                      (change)="cambiarPeriodo($event)"
+                      class="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                      @for (periodo of periodos.ordenados(); track periodo.id) {
+                        <option [value]="periodo.id">{{ periodo.nombre }}</option>
+                      }
+                    </select>
+                  </div>
+                }
                 <hr class="my-1 border-border" />
                 <button
                   type="button"
@@ -94,7 +110,7 @@
           aria-controls="menu-movil"
           [attr.aria-expanded]="menuMovilAbierto()"
           [attr.aria-label]="menuMovilAbierto() ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'"
-          class="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden"
+          class="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring xl:hidden"
         >
           @if (menuMovilAbierto()) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-5" aria-hidden="true">
@@ -110,7 +126,7 @@
     </div>
 
     @if (menuMovilAbierto()) {
-      <nav id="menu-movil" class="border-t border-border px-4 pb-3 pt-2 sm:px-6 lg:hidden" aria-label="Navegación principal">
+      <nav id="menu-movil" class="border-t border-border px-4 pb-3 pt-2 sm:px-6 xl:hidden" aria-label="Navegación principal">
         <ul class="flex flex-col gap-1">
           @for (enlace of enlaces(); track enlace.ruta) {
             <li>

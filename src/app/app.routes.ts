@@ -14,6 +14,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
   {
+    path: 'periodos',
+    canActivate: [soloAdmin],
+    loadComponent: () => import('./pages/periodos/periodos-page').then((m) => m.PeriodosPage),
+  },
+  {
     path: 'cortometrajes',
     canActivate: [soloAdmin],
     loadComponent: () => import('./pages/cortometrajes/cortometrajes-page').then((m) => m.CortometrajesPage),

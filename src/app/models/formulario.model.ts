@@ -5,6 +5,7 @@ export interface Criterio {
 
 export interface Seccion {
   id: string;
+  periodoId: string;
   nombre: string;
   criterios: Criterio[];
   premiacionIds: string[];

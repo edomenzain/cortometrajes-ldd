@@ -22,7 +22,7 @@
         class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       />
       @if (f.titulo().touched() && f.titulo().errors().length > 0) {
-        <p class="text-sm text-destructive" role="alert">El título es obligatorio.</p>
+        <app-field-error>El título es obligatorio.</app-field-error>
       }
     </div>
 
@@ -37,7 +37,7 @@
         class="rounded-md border border-border bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       ></textarea>
       @if (f.descripcion().touched() && f.descripcion().errors().length > 0) {
-        <p class="text-sm text-destructive" role="alert">La descripción es obligatoria.</p>
+        <app-field-error>La descripción es obligatoria.</app-field-error>
       }
     </div>
 
@@ -62,7 +62,18 @@
     </button>
   </form>
 
-  @if (lista().length === 0) {
+  @if (cargando()) {
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+      @for (i of filasEsqueleto; track i) {
+        <li class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
+          <app-skeleton clase="aspect-video w-full rounded-md" />
+          <app-skeleton clase="h-5 w-2/3" />
+          <app-skeleton clase="h-4 w-full" />
+          <app-skeleton clase="h-4 w-4/5" />
+        </li>
+      }
+    </ul>
+  } @else if (lista().length === 0) {
     <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
       Todavía no hay cortometrajes registrados.
     </div>
@@ -70,36 +81,116 @@
     <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       @for (corto of lista(); track corto.id) {
         <li class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow transition-transform duration-150 hover:-translate-y-0.5">
-          @if (urlEmbed(corto.youtubeUrl); as videoUrl) {
-            <div class="aspect-video overflow-hidden rounded-md bg-muted">
-              <iframe
-                class="size-full"
-                [src]="videoUrl"
-                title="Video de {{ corto.titulo }}"
-                loading="lazy"
-                allowfullscreen
-              ></iframe>
-            </div>
+          @if (editandoId() === corto.id) {
+            <form
+              (submit)="$event.preventDefault(); guardarEdicion(corto.id)"
+              class="flex flex-col gap-3"
+            >
+              <div class="flex flex-col gap-1.5">
+                <label [attr.for]="'editar-titulo-' + corto.id" class="text-sm font-medium text-foreground">
+                  Título <span class="text-destructive" aria-hidden="true">*</span>
+                </label>
+                <input
+                  [id]="'editar-titulo-' + corto.id"
+                  type="text"
+                  [formField]="fEdicion.titulo"
+                  autocomplete="off"
+                  class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                />
+                @if (fEdicion.titulo().touched() && fEdicion.titulo().errors().length > 0) {
+                  <app-field-error>El título es obligatorio.</app-field-error>
+                }
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label [attr.for]="'editar-descripcion-' + corto.id" class="text-sm font-medium text-foreground">
+                  Descripción <span class="text-destructive" aria-hidden="true">*</span>
+                </label>
+                <textarea
+                  [id]="'editar-descripcion-' + corto.id"
+                  rows="3"
+                  [formField]="fEdicion.descripcion"
+                  class="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                ></textarea>
+                @if (fEdicion.descripcion().touched() && fEdicion.descripcion().errors().length > 0) {
+                  <app-field-error>La descripción es obligatoria.</app-field-error>
+                }
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label [attr.for]="'editar-youtube-' + corto.id" class="text-sm font-medium text-foreground">
+                  Video de YouTube (opcional)
+                </label>
+                <input
+                  [id]="'editar-youtube-' + corto.id"
+                  type="url"
+                  placeholder="https://youtube.com/watch?v=..."
+                  [formField]="fEdicion.youtubeUrl"
+                  autocomplete="off"
+                  class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                />
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="submit"
+                  class="inline-flex h-9 cursor-pointer items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  (click)="cancelarEdicion()"
+                  class="inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
           } @else {
-            <div class="flex aspect-video flex-col items-center justify-center gap-2 rounded-md bg-muted text-muted-foreground" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5 19.5 8v8l-3.75-2.5M4.5 6.75h9a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
-              </svg>
-              <span class="text-xs font-medium">Sin video</span>
+            @if (urlEmbed(corto.youtubeUrl); as videoUrl) {
+              <div class="aspect-video overflow-hidden rounded-md bg-muted">
+                <iframe
+                  class="size-full"
+                  [src]="videoUrl"
+                  title="Video de {{ corto.titulo }}"
+                  loading="lazy"
+                  allowfullscreen
+                ></iframe>
+              </div>
+            } @else {
+              <div class="flex aspect-video flex-col items-center justify-center gap-2 rounded-md bg-muted text-muted-foreground" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5 19.5 8v8l-3.75-2.5M4.5 6.75h9a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
+                </svg>
+                <span class="text-xs font-medium">Sin video</span>
+              </div>
+            }
+            <h2 class="font-semibold text-foreground">{{ corto.titulo }}</h2>
+            <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
+            <div class="mt-auto flex items-center gap-1.5">
+              <button
+                type="button"
+                (click)="editar(corto.id)"
+                class="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-accent transition-colors duration-150 hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z" />
+                </svg>
+                Editar
+              </button>
+              <button
+                type="button"
+                (click)="eliminar(corto.id)"
+                class="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-destructive transition-colors duration-150 hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                  <path d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />
+                </svg>
+                Eliminar
+              </button>
             </div>
           }
-          <h2 class="font-semibold text-foreground">{{ corto.titulo }}</h2>
-          <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
-          <button
-            type="button"
-            (click)="eliminar(corto.id)"
-            class="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-destructive transition-colors duration-150 hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
-              <path d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />
-            </svg>
-            Eliminar
-          </button>
         </li>
       }
     </ul>

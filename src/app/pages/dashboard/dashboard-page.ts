@@ -5,6 +5,7 @@ import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { FormularioService } from '../../services/formulario.service';
 import { PremiacionesService } from '../../services/premiaciones.service';
 import { VotosPublicosService } from '../../services/votos-publicos.service';
+import { Skeleton } from '../../shared/skeleton';
 
 interface ProgresoJuez {
   id: string;
@@ -47,6 +48,7 @@ interface VotoPublicoResultado {
 
 @Component({
   selector: 'app-dashboard-page',
+  imports: [Skeleton],
   templateUrl: './dashboard-page.html',
 })
 export class DashboardPage {
@@ -56,6 +58,16 @@ export class DashboardPage {
   private readonly formulario = inject(FormularioService);
   private readonly premiacionesService = inject(PremiacionesService);
   private readonly votosPublicos = inject(VotosPublicosService);
+
+  protected readonly cargando = computed(
+    () =>
+      this.auth.cargandoUsuarios() ||
+      this.cortometrajes.cargando() ||
+      this.evaluaciones.cargando() ||
+      this.formulario.cargando() ||
+      this.premiacionesService.cargando() ||
+      this.votosPublicos.cargando(),
+  );
 
   protected readonly totalPremiaciones = computed(() => this.premiacionesService.premiaciones().length);
 

@@ -27,10 +27,21 @@ export class VotosPublicosService {
 
   readonly totalVotos = computed(() => this._votos().length);
 
+  private readonly _cargando = signal(true);
+  readonly cargando = this._cargando.asReadonly();
+
   constructor() {
-    onSnapshot(collection(db, COLECCION), (snap) => {
-      this._votos.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VotoPublico));
-    });
+    onSnapshot(
+      collection(db, COLECCION),
+      (snap) => {
+        this._votos.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VotoPublico));
+        this._cargando.set(false);
+      },
+      (error) => {
+        console.error('Error al escuchar votos del público en tiempo real', error);
+        this._cargando.set(false);
+      },
+    );
   }
 
   async votar(cortometrajeId: string): Promise<void> {

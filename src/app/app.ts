@@ -3,10 +3,11 @@ import { NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } f
 import { filter } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { TemaService } from './services/tema.service';
+import { ConfirmDialog } from './shared/confirm-dialog';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ConfirmDialog],
   templateUrl: './app.html',
   host: {
     '(document:click)': 'cerrarMenuUsuario()',

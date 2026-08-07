@@ -5,6 +5,7 @@ import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { FormularioService } from '../../services/formulario.service';
 import { PremiacionesService } from '../../services/premiaciones.service';
 import { VotosPublicosService } from '../../services/votos-publicos.service';
+import { Skeleton } from '../../shared/skeleton';
 
 interface Ranking {
   cortometrajeId: string;
@@ -33,6 +34,7 @@ interface VotoPublicoResultado {
 
 @Component({
   selector: 'app-resultados-page',
+  imports: [Skeleton],
   templateUrl: './resultados-page.html',
 })
 export class ResultadosPage {
@@ -42,6 +44,16 @@ export class ResultadosPage {
   private readonly formulario = inject(FormularioService);
   private readonly premiacionesService = inject(PremiacionesService);
   private readonly votosPublicos = inject(VotosPublicosService);
+
+  protected readonly cargando = computed(
+    () =>
+      this.cortometrajes.cargando() ||
+      this.evaluaciones.cargando() ||
+      this.formulario.cargando() ||
+      this.premiacionesService.cargando() ||
+      this.votosPublicos.cargando(),
+  );
+  protected readonly filasEsqueleto = [0, 1, 2];
 
   protected readonly totalVotosPublico = this.votosPublicos.totalVotos;
 

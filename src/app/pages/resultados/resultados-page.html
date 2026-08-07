@@ -4,6 +4,22 @@
     <p class="mt-1 text-sm text-muted-foreground">Promedio general por cortometraje, según todas las evaluaciones registradas.</p>
   </div>
 
+  @if (cargando()) {
+    <div class="overflow-x-auto rounded-2xl border border-border bg-surface card-shadow" aria-hidden="true">
+      <table class="w-full text-left text-sm">
+        <tbody>
+          @for (i of filasEsqueleto; track i) {
+            <tr class="border-b border-border last:border-0">
+              <td class="px-5 py-4"><app-skeleton clase="h-4 w-4" /></td>
+              <td class="px-5 py-4"><app-skeleton clase="h-4 w-40" /></td>
+              <td class="px-5 py-4"><app-skeleton clase="h-4 w-16" /></td>
+              <td class="px-5 py-4 text-right"><app-skeleton clase="ml-auto h-6 w-16 rounded-md" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
   @if (resultadosPorPremiacion().length > 0) {
     <section class="flex flex-col gap-4">
       <h2 class="text-lg font-semibold text-foreground">Resultados por premiación</h2>
@@ -133,5 +149,6 @@
         </tbody>
       </table>
     </div>
+  }
   }
 </div>

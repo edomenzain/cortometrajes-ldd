@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
-import { Unsubscribe, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { Unsubscribe, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { auth, db } from '../firebase';
 import { Usuario } from '../models/usuario.model';
@@ -23,9 +23,11 @@ export class AuthService {
   private readonly _usuarios = signal<Usuario[]>([]);
   private readonly _usuarioActual = signal<Usuario | null>(null);
   private readonly _listo = signal(false);
+  private readonly _cargandoUsuarios = signal(true);
 
   readonly usuarioActual = this._usuarioActual.asReadonly();
   readonly listo = this._listo.asReadonly();
+  readonly cargandoUsuarios = this._cargandoUsuarios.asReadonly();
   readonly esAdmin = computed(() => this.usuarioActual()?.rol === 'admin');
   readonly esJuez = computed(() => this.usuarioActual()?.rol === 'juez');
   readonly jueces = computed(() => this._usuarios().filter((u) => u.rol === 'juez'));
@@ -39,11 +41,22 @@ export class AuthService {
 
       this.desuscribirUsuarios?.();
       this.desuscribirUsuarios = usuarioFirebase
-        ? onSnapshot(collection(db, COLECCION), (snap) => {
-            this._usuarios.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Usuario));
-          })
+        ? onSnapshot(
+            collection(db, COLECCION),
+            (snap) => {
+              this._usuarios.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Usuario));
+              this._cargandoUsuarios.set(false);
+            },
+            (error) => {
+              console.error('Error al escuchar usuarios en tiempo real', error);
+              this._cargandoUsuarios.set(false);
+            },
+          )
         : null;
-      if (!usuarioFirebase) this._usuarios.set([]);
+      if (!usuarioFirebase) {
+        this._usuarios.set([]);
+        this._cargandoUsuarios.set(false);
+      }
     });
   }
 
@@ -91,6 +104,18 @@ export class AuthService {
       await signOut(authSecundaria);
       await deleteApp(appSecundaria);
     }
+  }
+
+  async editarJuez(id: string, nombre: string): Promise<{ ok: boolean; error?: string }> {
+    const nombreLimpio = nombre.trim();
+    if (!nombreLimpio) {
+      return { ok: false, error: 'El nombre es obligatorio.' };
+    }
+    await updateDoc(doc(db, COLECCION, id), { nombre: nombreLimpio });
+    if (this.usuarioActual()?.id === id) {
+      this._usuarioActual.update((u) => (u ? { ...u, nombre: nombreLimpio } : u));
+    }
+    return { ok: true };
   }
 
   eliminarJuez(id: string): void {

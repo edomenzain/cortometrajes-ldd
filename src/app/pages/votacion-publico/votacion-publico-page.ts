@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import QRCode from 'qrcode';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { VotosPublicosService } from '../../services/votos-publicos.service';
+import { Skeleton } from '../../shared/skeleton';
 
 interface ResultadoVoto {
   cortometrajeId: string;
@@ -12,11 +13,15 @@ interface ResultadoVoto {
 
 @Component({
   selector: 'app-votacion-publico-page',
+  imports: [Skeleton],
   templateUrl: './votacion-publico-page.html',
 })
 export class VotacionPublicoPage {
   private readonly cortometrajes = inject(CortometrajesService);
   private readonly votosPublicos = inject(VotosPublicosService);
+
+  protected readonly cargando = computed(() => this.cortometrajes.cargando() || this.votosPublicos.cargando());
+  protected readonly filasEsqueleto = [0, 1, 2, 3];
 
   protected readonly totalVotos = this.votosPublicos.totalVotos;
   protected readonly urlVotacion = `${location.origin}${location.pathname}#/votar`;

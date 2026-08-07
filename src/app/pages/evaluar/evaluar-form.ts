@@ -5,10 +5,12 @@ import { CortometrajesService } from '../../services/cortometrajes.service';
 import { FormularioService } from '../../services/formulario.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { SelectorPuntuacion } from '../../shared/selector-puntuacion';
+import { Skeleton } from '../../shared/skeleton';
+import { FieldError } from '../../shared/field-error';
 
 @Component({
   selector: 'app-evaluar-form',
-  imports: [RouterLink, SelectorPuntuacion],
+  imports: [RouterLink, SelectorPuntuacion, Skeleton, FieldError],
   templateUrl: './evaluar-form.html',
 })
 export class EvaluarForm {
@@ -23,6 +25,9 @@ export class EvaluarForm {
   protected readonly juez = this.auth.usuarioActual;
   protected readonly cortometraje = computed(() => this.cortometrajes.porId(this.id()));
   protected readonly secciones = this.formulario.secciones;
+  protected readonly cargando = computed(
+    () => this.cortometrajes.cargando() || this.formulario.cargando() || this.evaluaciones.cargando(),
+  );
 
   protected readonly yaEvaluado = computed(() => {
     const juezId = this.juez()?.id;

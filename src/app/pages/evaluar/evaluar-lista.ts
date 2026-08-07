@@ -5,10 +5,11 @@ import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { idDeYoutube } from '../../shared/youtube';
+import { Skeleton } from '../../shared/skeleton';
 
 @Component({
   selector: 'app-evaluar-lista',
-  imports: [RouterLink],
+  imports: [RouterLink, Skeleton],
   templateUrl: './evaluar-lista.html',
 })
 export class EvaluarLista {
@@ -17,6 +18,8 @@ export class EvaluarLista {
   private readonly evaluaciones = inject(EvaluacionesService);
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly lista = this.cortometrajes.cortometrajes;
+  protected readonly cargando = this.cortometrajes.cargando;
+  protected readonly filasEsqueleto = [0, 1, 2];
 
   protected urlEmbed(youtubeUrl: string | undefined): SafeResourceUrl | null {
     const videoId = idDeYoutube(youtubeUrl);

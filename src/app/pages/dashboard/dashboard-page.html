@@ -13,6 +13,26 @@
     </div>
   </div>
 
+  @if (cargando()) {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5" aria-hidden="true">
+      @for (i of [0, 1, 2, 3, 4]; track i) {
+        <div class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
+          <app-skeleton clase="h-4 w-2/3" />
+          <app-skeleton clase="h-8 w-1/3" />
+        </div>
+      }
+    </div>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2" aria-hidden="true">
+      @for (i of [0, 1]; track i) {
+        <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+          <app-skeleton clase="h-5 w-1/3" />
+          @for (j of [0, 1, 2]; track j) {
+            <app-skeleton clase="h-4 w-full" />
+          }
+        </section>
+      }
+    </div>
+  } @else {
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
     <div class="rounded-2xl border border-border bg-surface p-5 card-shadow">
       <p class="text-sm text-muted-foreground">Jueces registrados</p>
@@ -174,4 +194,5 @@
       </ul>
     }
   </section>
+  }
 </div>

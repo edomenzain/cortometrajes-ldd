@@ -4,7 +4,19 @@
     <p class="mt-1 text-sm text-muted-foreground">Solo puedes votar una vez.</p>
   </div>
 
-  @if (yaVoto()) {
+  @if (cargando()) {
+    <ul class="flex flex-col gap-3" aria-hidden="true">
+      @for (i of filasEsqueleto; track i) {
+        <li class="flex items-start gap-4 rounded-2xl border border-border bg-surface p-5 card-shadow">
+          <app-skeleton clase="size-9 shrink-0 rounded-full" />
+          <div class="flex flex-1 flex-col gap-2">
+            <app-skeleton clase="h-4 w-1/2" />
+            <app-skeleton clase="h-4 w-full" />
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (yaVoto()) {
     <div class="flex flex-col items-center gap-3 rounded-2xl border border-accent bg-accent/5 p-10 text-center card-shadow">
       <span class="flex size-14 items-center justify-center rounded-full bg-accent text-accent-content">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-7" aria-hidden="true">
@@ -27,7 +39,7 @@
         <li>
           <button
             type="button"
-            (click)="votar(corto.id)"
+            (click)="votar(corto.id, corto.titulo)"
             class="flex w-full cursor-pointer items-start gap-4 rounded-2xl border border-border bg-surface p-5 text-left card-shadow transition-all duration-150 hover:-translate-y-0.5 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">

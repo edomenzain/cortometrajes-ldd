@@ -32,7 +32,19 @@
 
     <section class="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-6 card-shadow">
       <h2 class="font-semibold text-foreground">Resultados</h2>
-      @if (resultados().length === 0) {
+      @if (cargando()) {
+        <ul class="flex flex-col gap-4" aria-hidden="true">
+          @for (i of filasEsqueleto; track i) {
+            <li class="flex items-center gap-3">
+              <app-skeleton clase="size-7 shrink-0 rounded-full" />
+              <div class="flex flex-1 flex-col gap-1.5">
+                <app-skeleton clase="h-4 w-1/2" />
+                <app-skeleton clase="h-2.5 w-full rounded-full" />
+              </div>
+            </li>
+          }
+        </ul>
+      } @else if (resultados().length === 0) {
         <p class="text-sm text-muted-foreground">Todavía no hay cortometrajes registrados.</p>
       } @else {
         <ul class="flex flex-col gap-4">

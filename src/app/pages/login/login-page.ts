@@ -2,10 +2,12 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormField, form, required } from '@angular/forms/signals';
 import { AuthService } from '../../services/auth.service';
+import { Alert } from '../../shared/alert';
+import { FieldError } from '../../shared/field-error';
 
 @Component({
   selector: 'app-login-page',
-  imports: [FormField],
+  imports: [FormField, Alert, FieldError],
   templateUrl: './login-page.html',
 })
 export class LoginPage {

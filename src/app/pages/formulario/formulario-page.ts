@@ -1,9 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { FormularioService } from '../../services/formulario.service';
 import { PremiacionesService } from '../../services/premiaciones.service';
+import { Skeleton } from '../../shared/skeleton';
 
 @Component({
   selector: 'app-formulario-page',
+  imports: [Skeleton],
   templateUrl: './formulario-page.html',
 })
 export class FormularioPage {
@@ -11,6 +13,8 @@ export class FormularioPage {
   private readonly premiacionesService = inject(PremiacionesService);
   protected readonly secciones = this.formulario.secciones;
   protected readonly premiaciones = this.premiacionesService.premiaciones;
+  protected readonly cargando = computed(() => this.formulario.cargando() || this.premiacionesService.cargando());
+  protected readonly filasEsqueleto = [0, 1, 2];
 
   protected agregarSeccion(input: HTMLInputElement): void {
     this.formulario.agregarSeccion(input.value);

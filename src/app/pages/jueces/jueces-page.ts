@@ -3,6 +3,10 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
+import { Skeleton } from '../../shared/skeleton';
+import { Alert } from '../../shared/alert';
+import { FieldError } from '../../shared/field-error';
+import { ConfirmService } from '../../shared/confirm.service';
 
 interface FilaJuez {
   id: string;
@@ -15,13 +19,19 @@ interface FilaJuez {
 
 @Component({
   selector: 'app-jueces-page',
-  imports: [FormField],
+  imports: [FormField, Skeleton, Alert, FieldError],
   templateUrl: './jueces-page.html',
 })
 export class JuecesPage {
   private readonly auth = inject(AuthService);
   private readonly cortometrajes = inject(CortometrajesService);
   private readonly evaluaciones = inject(EvaluacionesService);
+  private readonly confirmar = inject(ConfirmService);
+
+  protected readonly cargando = computed(
+    () => this.auth.cargandoUsuarios() || this.cortometrajes.cargando() || this.evaluaciones.cargando(),
+  );
+  protected readonly filasEsqueleto = [0, 1, 2];
 
   protected readonly modelo = signal({ nombre: '', email: '', password: '' });
   protected readonly f = form(this.modelo, (path) => {
@@ -32,6 +42,8 @@ export class JuecesPage {
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected readonly editandoId = signal<string | null>(null);
 
   protected readonly filas = computed<FilaJuez[]>(() => {
     const cortos = this.cortometrajes.cortometrajes();
@@ -65,12 +77,28 @@ export class JuecesPage {
     this.modelo.set({ nombre: '', email: '', password: '' });
   }
 
-  protected eliminar(id: string, nombre: string): void {
+  protected editar(id: string): void {
+    this.editandoId.set(id);
+  }
+
+  protected async guardarEdicion(id: string, input: HTMLInputElement): Promise<void> {
+    const resultado = await this.auth.editarJuez(id, input.value);
+    if (resultado.ok) {
+      this.editandoId.set(null);
+    }
+  }
+
+  protected cancelarEdicion(): void {
+    this.editandoId.set(null);
+  }
+
+  protected async eliminar(id: string, nombre: string): Promise<void> {
     const tieneEvaluaciones = this.evaluaciones.porJuez(id).length > 0;
     const aviso = tieneEvaluaciones
       ? `${nombre} ya tiene evaluaciones registradas. ¿Eliminarlo de todas formas?`
       : `¿Eliminar a ${nombre}?`;
-    if (confirm(aviso)) {
+    const confirmado = await this.confirmar.pedir(aviso, { textoAceptar: 'Eliminar', destructivo: true });
+    if (confirmado) {
       this.auth.eliminarJuez(id);
     }
   }

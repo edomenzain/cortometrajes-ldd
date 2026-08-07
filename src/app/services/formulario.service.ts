@@ -55,13 +55,24 @@ export class FormularioService {
   readonly secciones = this._secciones.asReadonly();
   private sembrando = false;
 
+  private readonly _cargando = signal(true);
+  readonly cargando = this._cargando.asReadonly();
+
   constructor() {
     this.sembrarSiVacio();
-    onSnapshot(collection(db, COLECCION), (snap) => {
-      this._secciones.set(
-        snap.docs.map((d) => ({ id: d.id, ...d.data(), premiacionIds: d.data()['premiacionIds'] ?? [] }) as Seccion),
-      );
-    });
+    onSnapshot(
+      collection(db, COLECCION),
+      (snap) => {
+        this._secciones.set(
+          snap.docs.map((d) => ({ id: d.id, ...d.data(), premiacionIds: d.data()['premiacionIds'] ?? [] }) as Seccion),
+        );
+        this._cargando.set(false);
+      },
+      (error) => {
+        console.error('Error al escuchar el formulario en tiempo real', error);
+        this._cargando.set(false);
+      },
+    );
   }
 
   agregarSeccion(nombre: string): void {

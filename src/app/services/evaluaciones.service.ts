@@ -10,10 +10,21 @@ export class EvaluacionesService {
   private readonly _evaluaciones = signal<Evaluacion[]>([]);
   readonly evaluaciones = this._evaluaciones.asReadonly();
 
+  private readonly _cargando = signal(true);
+  readonly cargando = this._cargando.asReadonly();
+
   constructor() {
-    onSnapshot(collection(db, COLECCION), (snap) => {
-      this._evaluaciones.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Evaluacion));
-    });
+    onSnapshot(
+      collection(db, COLECCION),
+      (snap) => {
+        this._evaluaciones.set(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Evaluacion));
+        this._cargando.set(false);
+      },
+      (error) => {
+        console.error('Error al escuchar evaluaciones en tiempo real', error);
+        this._cargando.set(false);
+      },
+    );
   }
 
   agregar(datos: {

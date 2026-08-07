@@ -28,7 +28,16 @@
     </button>
   </form>
 
-  @if (premiaciones().length === 0) {
+  @if (cargando()) {
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+      @for (i of filasEsqueleto; track i) {
+        <li class="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
+          <app-skeleton clase="h-5 w-2/3" />
+          <app-skeleton clase="size-8 shrink-0 rounded-md" />
+        </li>
+      }
+    </ul>
+  } @else if (premiaciones().length === 0) {
     <div class="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
       Todavía no hay premiaciones definidas.
     </div>
@@ -36,17 +45,60 @@
     <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       @for (premiacion of premiaciones(); track premiacion.id) {
         <li class="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
-          <span class="font-medium text-foreground">{{ premiacion.nombre }}</span>
-          <button
-            type="button"
-            (click)="eliminar(premiacion.id, premiacion.nombre)"
-            aria-label="Eliminar premiación {{ premiacion.nombre }}"
-            class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
-              <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
-          </button>
+          @if (editandoId() === premiacion.id) {
+            <form
+              (submit)="$event.preventDefault(); guardarEdicion(premiacion.id, editarInput)"
+              class="flex w-full flex-col gap-2"
+            >
+              <label class="sr-only" [attr.for]="'editar-' + premiacion.id">Editar nombre de premiación</label>
+              <input
+                #editarInput
+                [id]="'editar-' + premiacion.id"
+                type="text"
+                [value]="premiacion.nombre"
+                class="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              />
+              <div class="flex items-center gap-2">
+                <button
+                  type="submit"
+                  class="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  (click)="cancelarEdicion()"
+                  class="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          } @else {
+            <span class="font-medium text-foreground">{{ premiacion.nombre }}</span>
+            <div class="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                (click)="editar(premiacion.id)"
+                aria-label="Editar premiación {{ premiacion.nombre }}"
+                class="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/10 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                (click)="eliminar(premiacion.id, premiacion.nombre)"
+                aria-label="Eliminar premiación {{ premiacion.nombre }}"
+                class="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </div>
+          }
         </li>
       }
     </ul>

@@ -80,7 +80,11 @@ export class AuthService {
     } catch (error) {
       const codigo = (error as { code?: string }).code;
       if (codigo === 'auth/email-already-in-use') {
-        return { ok: false, error: 'Ya existe un usuario con ese email.' };
+        return {
+          ok: false,
+          error:
+            'Ya existe una cuenta con ese email en Authentication (aunque no aparezca en la lista de jueces). Bórrala manualmente desde la consola de Firebase Authentication e intenta de nuevo.',
+        };
       }
       return { ok: false, error: 'No se pudo crear el juez.' };
     } finally {

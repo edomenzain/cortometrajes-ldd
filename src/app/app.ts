@@ -37,10 +37,8 @@ export class App {
     if (this.auth.esAdmin()) {
       return [
         { ruta: '/dashboard', etiqueta: 'Panel' },
-        { ruta: '/periodos', etiqueta: 'Periodos' },
         { ruta: '/cortometrajes', etiqueta: 'Cortometrajes' },
         { ruta: '/formulario', etiqueta: 'Formulario de evaluación' },
-        { ruta: '/jueces', etiqueta: 'Jueces' },
         { ruta: '/premiaciones', etiqueta: 'Premiaciones' },
         { ruta: '/votacion-publico', etiqueta: 'Votación del público' },
         { ruta: '/resultados', etiqueta: 'Resultados' },

@@ -75,6 +75,27 @@
                   <p class="truncate text-sm font-medium text-foreground">{{ usuario.nombre }}</p>
                   <p class="text-xs text-muted-foreground capitalize">{{ usuario.rol }}</p>
                 </div>
+                @if (auth.esAdmin()) {
+                  <hr class="my-1 border-border" />
+                  <a
+                    routerLink="/periodos"
+                    routerLinkActive
+                    #rlaPeriodos="routerLinkActive"
+                    class="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-2 text-left text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [class]="rlaPeriodos.isActive ? 'bg-primary text-primary-content' : 'text-foreground hover:bg-muted'"
+                  >
+                    Periodos
+                  </a>
+                  <a
+                    routerLink="/jueces"
+                    routerLinkActive
+                    #rlaJueces="routerLinkActive"
+                    class="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-2 text-left text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [class]="rlaJueces.isActive ? 'bg-primary text-primary-content' : 'text-foreground hover:bg-muted'"
+                  >
+                    Jueces
+                  </a>
+                }
                 @if (auth.esAdmin() && periodos.ordenados().length > 0) {
                   <hr class="my-1 border-border" />
                   <div class="px-2.5 py-1.5">

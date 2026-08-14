@@ -42,6 +42,22 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
+      <label for="director" class="text-sm font-medium text-foreground">
+        Director <span class="text-destructive" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="director"
+        type="text"
+        [formField]="f.director"
+        autocomplete="off"
+        class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      />
+      @if (f.director().touched() && f.director().errors().length > 0) {
+        <app-field-error>El director es obligatorio.</app-field-error>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
       <label for="youtube" class="text-sm font-medium text-foreground">Video de YouTube (opcional)</label>
       <input
         id="youtube"
@@ -52,6 +68,103 @@
         class="h-11 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       />
       <p class="text-sm text-muted-foreground">Pega el enlace completo del video.</p>
+    </div>
+
+    <div class="flex flex-col gap-3 rounded-md border border-border p-4">
+      <div>
+        <p class="text-sm font-medium text-foreground">Campañas de marketing (opcional)</p>
+        <p class="text-sm text-muted-foreground">Agrega una liga por cada red social donde se promocione el cortometraje.</p>
+      </div>
+
+      @if (campanas().length > 0) {
+        <ul class="flex flex-col gap-2">
+          @for (campana of campanas(); track campana.redSocial) {
+            <li class="flex items-center gap-2.5 rounded-md border border-border bg-background p-2.5">
+              <span
+                class="flex size-8 shrink-0 items-center justify-center rounded-full p-1.5 text-white"
+                [style.background]="colorRedSocial(campana.redSocial)"
+              >
+                <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-foreground">{{ etiquetaRedSocial(campana.redSocial) }}</p>
+                <p class="truncate text-xs text-muted-foreground">{{ campana.liga }}</p>
+              </div>
+              <button
+                type="button"
+                (click)="quitarCampana($index)"
+                [attr.aria-label]="'Quitar campaña de ' + etiquetaRedSocial(campana.redSocial)"
+                class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (redesDisponibles().length > 0) {
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div class="flex flex-1 flex-col gap-1.5">
+            <label for="campana-red-social" class="text-sm font-medium text-foreground">Red social</label>
+            <div class="flex items-center gap-2">
+              <span
+                class="flex size-9 shrink-0 items-center justify-center rounded-full p-1.5 text-white"
+                [style.background]="colorRedSocial(campanaRedSocial())"
+              >
+                @if (campanaRedSocial(); as redSeleccionada) {
+                  <app-red-social-icono [redSocial]="redSeleccionada" class="size-full" />
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-full" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path stroke-linecap="round" d="M3 12h18M12 3a13.5 13.5 0 0 1 0 18 13.5 13.5 0 0 1 0-18Z" />
+                  </svg>
+                }
+              </span>
+              <select
+                id="campana-red-social"
+                [value]="campanaRedSocial()"
+                (change)="actualizarCampanaRedSocial($event)"
+                class="h-10 flex-1 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <option value="">Selecciona una red social</option>
+                @for (red of redesDisponibles(); track red.valor) {
+                  <option [value]="red.valor">{{ red.etiqueta }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="flex flex-1 flex-col gap-1.5">
+            <label for="liga-red-social" class="text-sm font-medium text-foreground">Liga de acceso</label>
+            <input
+              id="liga-red-social"
+              type="url"
+              placeholder="https://..."
+              [value]="campanaLiga()"
+              (input)="actualizarCampanaLiga($event)"
+              autocomplete="off"
+              [attr.aria-invalid]="campanaLigaError() ? true : null"
+              class="h-10 rounded-md border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            />
+            @if (campanaLigaError()) {
+              <app-field-error>{{ campanaLigaError() }}</app-field-error>
+            }
+          </div>
+          <button
+            type="button"
+            (click)="agregarCampana()"
+            [disabled]="!campanaRedSocial() || !campanaLiga().trim()"
+            class="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Agregar
+          </button>
+        </div>
+      }
     </div>
 
     <button
@@ -118,6 +231,22 @@
               </div>
 
               <div class="flex flex-col gap-1.5">
+                <label [attr.for]="'editar-director-' + corto.id" class="text-sm font-medium text-foreground">
+                  Director <span class="text-destructive" aria-hidden="true">*</span>
+                </label>
+                <input
+                  [id]="'editar-director-' + corto.id"
+                  type="text"
+                  [formField]="fEdicion.director"
+                  autocomplete="off"
+                  class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                />
+                @if (fEdicion.director().touched() && fEdicion.director().errors().length > 0) {
+                  <app-field-error>El director es obligatorio.</app-field-error>
+                }
+              </div>
+
+              <div class="flex flex-col gap-1.5">
                 <label [attr.for]="'editar-youtube-' + corto.id" class="text-sm font-medium text-foreground">
                   Video de YouTube (opcional)
                 </label>
@@ -129,6 +258,103 @@
                   autocomplete="off"
                   class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 />
+              </div>
+
+              <div class="flex flex-col gap-3 rounded-md border border-border p-3">
+                <div>
+                  <p class="text-sm font-medium text-foreground">Campañas de marketing (opcional)</p>
+                  <p class="text-sm text-muted-foreground">Agrega una liga por cada red social donde se promocione el cortometraje.</p>
+                </div>
+
+                @if (campanasEdicion().length > 0) {
+                  <ul class="flex flex-col gap-2">
+                    @for (campana of campanasEdicion(); track campana.redSocial) {
+                      <li class="flex items-center gap-2.5 rounded-md border border-border bg-background p-2.5">
+                        <span
+                          class="flex size-8 shrink-0 items-center justify-center rounded-full p-1.5 text-white"
+                          [style.background]="colorRedSocial(campana.redSocial)"
+                        >
+                          <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                          <p class="text-sm font-medium text-foreground">{{ etiquetaRedSocial(campana.redSocial) }}</p>
+                          <p class="truncate text-xs text-muted-foreground">{{ campana.liga }}</p>
+                        </div>
+                        <button
+                          type="button"
+                          (click)="quitarCampanaEdicion($index)"
+                          [attr.aria-label]="'Quitar campaña de ' + etiquetaRedSocial(campana.redSocial)"
+                          class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                @if (redesDisponiblesEdicion().length > 0) {
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <div class="flex flex-1 flex-col gap-1.5">
+                      <label [attr.for]="'editar-campana-red-social-' + corto.id" class="text-sm font-medium text-foreground">Red social</label>
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="flex size-9 shrink-0 items-center justify-center rounded-full p-1.5 text-white"
+                          [style.background]="colorRedSocial(campanaRedSocialEdicion())"
+                        >
+                          @if (campanaRedSocialEdicion(); as redSeleccionada) {
+                            <app-red-social-icono [redSocial]="redSeleccionada" class="size-full" />
+                          } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-full" aria-hidden="true">
+                              <circle cx="12" cy="12" r="9" />
+                              <path stroke-linecap="round" d="M3 12h18M12 3a13.5 13.5 0 0 1 0 18 13.5 13.5 0 0 1 0-18Z" />
+                            </svg>
+                          }
+                        </span>
+                        <select
+                          [id]="'editar-campana-red-social-' + corto.id"
+                          [value]="campanaRedSocialEdicion()"
+                          (change)="actualizarCampanaRedSocialEdicion($event)"
+                          class="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        >
+                          <option value="">Selecciona una red social</option>
+                          @for (red of redesDisponiblesEdicion(); track red.valor) {
+                            <option [value]="red.valor">{{ red.etiqueta }}</option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                    <div class="flex flex-1 flex-col gap-1.5">
+                      <label [attr.for]="'editar-campana-liga-' + corto.id" class="text-sm font-medium text-foreground">Liga de acceso</label>
+                      <input
+                        [id]="'editar-campana-liga-' + corto.id"
+                        type="url"
+                        placeholder="https://..."
+                        [value]="campanaLigaEdicion()"
+                        (input)="actualizarCampanaLigaEdicion($event)"
+                        autocomplete="off"
+                        [attr.aria-invalid]="campanaLigaErrorEdicion() ? true : null"
+                        class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      />
+                      @if (campanaLigaErrorEdicion()) {
+                        <app-field-error>{{ campanaLigaErrorEdicion() }}</app-field-error>
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      (click)="agregarCampanaEdicion()"
+                      [disabled]="!campanaRedSocialEdicion() || !campanaLigaEdicion().trim()"
+                      class="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Agregar
+                    </button>
+                  </div>
+                }
               </div>
 
               <div class="flex items-center gap-2">
@@ -167,7 +393,27 @@
               </div>
             }
             <h2 class="font-semibold text-foreground">{{ corto.titulo }}</h2>
+            <p class="text-sm text-muted-foreground">Dir. {{ corto.director }}</p>
             <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
+            @if (corto.campanasMarketing && corto.campanasMarketing.length > 0) {
+              <ul class="flex flex-wrap items-center gap-1.5">
+                @for (campana of corto.campanasMarketing; track campana.redSocial) {
+                  <li>
+                    <a
+                      [href]="campana.liga"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      [attr.aria-label]="'Campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                      [title]="'Campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                      class="flex size-8 items-center justify-center rounded-full p-1.5 text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      [style.background]="colorRedSocial(campana.redSocial)"
+                    >
+                      <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
             <div class="mt-auto flex items-center gap-1.5">
               <button
                 type="button"

@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Cortometraje } from '../models/cortometraje.model';
+import { CampanaMarketing, Cortometraje } from '../models/cortometraje.model';
 import { PeriodosService } from './periodos.service';
 
 const COLECCION = 'cortometrajes';
@@ -33,25 +33,44 @@ export class CortometrajesService {
     );
   }
 
-  agregar(datos: { titulo: string; descripcion: string; youtubeUrl?: string }): void {
+  agregar(datos: {
+    titulo: string;
+    descripcion: string;
+    director: string;
+    youtubeUrl?: string;
+    campanas: CampanaMarketing[];
+  }): void {
     const periodoId = this.periodos.seleccionado()?.id;
     if (!periodoId) return;
     const nuevo: Record<string, unknown> = {
       titulo: datos.titulo.trim(),
       descripcion: datos.descripcion.trim(),
+      director: datos.director.trim(),
       periodoId,
       creadoEn: Date.now(),
     };
     const youtubeUrl = datos.youtubeUrl?.trim();
     if (youtubeUrl) nuevo['youtubeUrl'] = youtubeUrl;
+    if (datos.campanas.length > 0) nuevo['campanasMarketing'] = datos.campanas;
     addDoc(collection(db, COLECCION), nuevo);
   }
 
-  editar(id: string, datos: { titulo: string; descripcion: string; youtubeUrl?: string }): void {
+  editar(
+    id: string,
+    datos: {
+      titulo: string;
+      descripcion: string;
+      director: string;
+      youtubeUrl?: string;
+      campanas: CampanaMarketing[];
+    },
+  ): void {
     const cambios: Record<string, unknown> = {
       titulo: datos.titulo.trim(),
       descripcion: datos.descripcion.trim(),
+      director: datos.director.trim(),
       youtubeUrl: datos.youtubeUrl?.trim() || null,
+      campanasMarketing: datos.campanas.length > 0 ? datos.campanas : null,
     };
     updateDoc(doc(db, COLECCION, id), cambios);
   }

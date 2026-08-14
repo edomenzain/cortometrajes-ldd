@@ -7,9 +7,14 @@
   </div>
 
   <form
+    id="formulario-cortometraje"
     (submit)="$event.preventDefault(); guardar()"
     class="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-6 card-shadow"
   >
+    <h2 class="text-lg font-semibold text-foreground">
+      {{ editandoId() ? 'Editar cortometraje' : 'Agregar cortometraje' }}
+    </h2>
+
     <div class="flex flex-col gap-1.5">
       <label for="titulo" class="text-sm font-medium text-foreground">
         Título <span class="text-destructive" aria-hidden="true">*</span>
@@ -167,12 +172,23 @@
       }
     </div>
 
-    <button
-      type="submit"
-      class="mt-1 inline-flex h-11 w-fit cursor-pointer items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-    >
-      Agregar cortometraje
-    </button>
+    <div class="mt-1 flex items-center gap-2">
+      <button
+        type="submit"
+        class="inline-flex h-11 w-fit cursor-pointer items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        {{ editandoId() ? 'Guardar cambios' : 'Agregar cortometraje' }}
+      </button>
+      @if (editandoId()) {
+        <button
+          type="button"
+          (click)="cancelarEdicion()"
+          class="inline-flex h-11 cursor-pointer items-center justify-center rounded-md px-5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Cancelar
+        </button>
+      }
+    </div>
   </form>
 
   @if (cargando()) {
@@ -193,187 +209,11 @@
   } @else {
     <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       @for (corto of lista(); track corto.id) {
-        <li class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow transition-transform duration-150 hover:-translate-y-0.5">
-          @if (editandoId() === corto.id) {
-            <form
-              (submit)="$event.preventDefault(); guardarEdicion(corto.id)"
-              class="flex flex-col gap-3"
-            >
-              <div class="flex flex-col gap-1.5">
-                <label [attr.for]="'editar-titulo-' + corto.id" class="text-sm font-medium text-foreground">
-                  Título <span class="text-destructive" aria-hidden="true">*</span>
-                </label>
-                <input
-                  [id]="'editar-titulo-' + corto.id"
-                  type="text"
-                  [formField]="fEdicion.titulo"
-                  autocomplete="off"
-                  class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                />
-                @if (fEdicion.titulo().touched() && fEdicion.titulo().errors().length > 0) {
-                  <app-field-error>El título es obligatorio.</app-field-error>
-                }
-              </div>
-
-              <div class="flex flex-col gap-1.5">
-                <label [attr.for]="'editar-descripcion-' + corto.id" class="text-sm font-medium text-foreground">
-                  Descripción <span class="text-destructive" aria-hidden="true">*</span>
-                </label>
-                <textarea
-                  [id]="'editar-descripcion-' + corto.id"
-                  rows="3"
-                  [formField]="fEdicion.descripcion"
-                  class="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                ></textarea>
-                @if (fEdicion.descripcion().touched() && fEdicion.descripcion().errors().length > 0) {
-                  <app-field-error>La descripción es obligatoria.</app-field-error>
-                }
-              </div>
-
-              <div class="flex flex-col gap-1.5">
-                <label [attr.for]="'editar-director-' + corto.id" class="text-sm font-medium text-foreground">
-                  Director <span class="text-destructive" aria-hidden="true">*</span>
-                </label>
-                <input
-                  [id]="'editar-director-' + corto.id"
-                  type="text"
-                  [formField]="fEdicion.director"
-                  autocomplete="off"
-                  class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                />
-                @if (fEdicion.director().touched() && fEdicion.director().errors().length > 0) {
-                  <app-field-error>El director es obligatorio.</app-field-error>
-                }
-              </div>
-
-              <div class="flex flex-col gap-1.5">
-                <label [attr.for]="'editar-youtube-' + corto.id" class="text-sm font-medium text-foreground">
-                  Video de YouTube (opcional)
-                </label>
-                <input
-                  [id]="'editar-youtube-' + corto.id"
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=..."
-                  [formField]="fEdicion.youtubeUrl"
-                  autocomplete="off"
-                  class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                />
-              </div>
-
-              <div class="flex flex-col gap-3 rounded-md border border-border p-3">
-                <div>
-                  <p class="text-sm font-medium text-foreground">Campañas de marketing (opcional)</p>
-                  <p class="text-sm text-muted-foreground">Agrega una liga por cada red social donde se promocione el cortometraje.</p>
-                </div>
-
-                @if (campanasEdicion().length > 0) {
-                  <ul class="flex flex-col gap-2">
-                    @for (campana of campanasEdicion(); track campana.redSocial) {
-                      <li class="flex items-center gap-2.5 rounded-md border border-border bg-background p-2.5">
-                        <span
-                          class="flex size-8 shrink-0 items-center justify-center rounded-full p-1.5 text-white"
-                          [style.background]="colorRedSocial(campana.redSocial)"
-                        >
-                          <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
-                        </span>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-sm font-medium text-foreground">{{ etiquetaRedSocial(campana.redSocial) }}</p>
-                          <p class="truncate text-xs text-muted-foreground">{{ campana.liga }}</p>
-                        </div>
-                        <button
-                          type="button"
-                          (click)="quitarCampanaEdicion($index)"
-                          [attr.aria-label]="'Quitar campaña de ' + etiquetaRedSocial(campana.redSocial)"
-                          class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </li>
-                    }
-                  </ul>
-                }
-
-                @if (redesDisponiblesEdicion().length > 0) {
-                  <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                    <div class="flex flex-1 flex-col gap-1.5">
-                      <label [attr.for]="'editar-campana-red-social-' + corto.id" class="text-sm font-medium text-foreground">Red social</label>
-                      <div class="flex items-center gap-2">
-                        <span
-                          class="flex size-9 shrink-0 items-center justify-center rounded-full p-1.5 text-white"
-                          [style.background]="colorRedSocial(campanaRedSocialEdicion())"
-                        >
-                          @if (campanaRedSocialEdicion(); as redSeleccionada) {
-                            <app-red-social-icono [redSocial]="redSeleccionada" class="size-full" />
-                          } @else {
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-full" aria-hidden="true">
-                              <circle cx="12" cy="12" r="9" />
-                              <path stroke-linecap="round" d="M3 12h18M12 3a13.5 13.5 0 0 1 0 18 13.5 13.5 0 0 1 0-18Z" />
-                            </svg>
-                          }
-                        </span>
-                        <select
-                          [id]="'editar-campana-red-social-' + corto.id"
-                          [value]="campanaRedSocialEdicion()"
-                          (change)="actualizarCampanaRedSocialEdicion($event)"
-                          class="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                        >
-                          <option value="">Selecciona una red social</option>
-                          @for (red of redesDisponiblesEdicion(); track red.valor) {
-                            <option [value]="red.valor">{{ red.etiqueta }}</option>
-                          }
-                        </select>
-                      </div>
-                    </div>
-                    <div class="flex flex-1 flex-col gap-1.5">
-                      <label [attr.for]="'editar-campana-liga-' + corto.id" class="text-sm font-medium text-foreground">Liga de acceso</label>
-                      <input
-                        [id]="'editar-campana-liga-' + corto.id"
-                        type="url"
-                        placeholder="https://..."
-                        [value]="campanaLigaEdicion()"
-                        (input)="actualizarCampanaLigaEdicion($event)"
-                        autocomplete="off"
-                        [attr.aria-invalid]="campanaLigaErrorEdicion() ? true : null"
-                        class="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                      />
-                      @if (campanaLigaErrorEdicion()) {
-                        <app-field-error>{{ campanaLigaErrorEdicion() }}</app-field-error>
-                      }
-                    </div>
-                    <button
-                      type="button"
-                      (click)="agregarCampanaEdicion()"
-                      [disabled]="!campanaRedSocialEdicion() || !campanaLigaEdicion().trim()"
-                      class="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      Agregar
-                    </button>
-                  </div>
-                }
-              </div>
-
-              <div class="flex items-center gap-2">
-                <button
-                  type="submit"
-                  class="inline-flex h-9 cursor-pointer items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                >
-                  Guardar
-                </button>
-                <button
-                  type="button"
-                  (click)="cancelarEdicion()"
-                  class="inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          } @else {
+        <li
+          class="flex flex-col gap-3 rounded-2xl border bg-surface p-5 card-shadow transition-transform duration-150 hover:-translate-y-0.5"
+          [class.border-accent]="editandoId() === corto.id"
+          [class.border-border]="editandoId() !== corto.id"
+        >
             @if (urlEmbed(corto.youtubeUrl); as videoUrl) {
               <div class="aspect-video overflow-hidden rounded-md bg-muted">
                 <iframe
@@ -436,7 +276,6 @@
                 Eliminar
               </button>
             </div>
-          }
         </li>
       }
     </ul>

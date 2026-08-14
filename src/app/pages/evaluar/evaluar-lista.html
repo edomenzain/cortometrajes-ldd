@@ -53,11 +53,31 @@
                 <span class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Pendiente</span>
               }
             </div>
+            <p class="text-sm text-muted-foreground">Dir. {{ corto.director }}</p>
             <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
             <span class="mt-auto text-sm font-medium text-primary">
               {{ totalEvaluaciones(corto.id) }} evaluación(es) registrada(s)
             </span>
           </a>
+          @if (corto.campanasMarketing && corto.campanasMarketing.length > 0) {
+            <ul class="flex flex-wrap items-center gap-1.5">
+              @for (campana of corto.campanasMarketing; track campana.redSocial) {
+                <li>
+                  <a
+                    [href]="campana.liga"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [attr.aria-label]="'Campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                    [title]="'Campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                    class="flex size-8 items-center justify-center rounded-full p-1.5 text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [style.background]="colorRedSocial(campana.redSocial)"
+                  >
+                    <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+                  </a>
+                </li>
+              }
+            </ul>
+          }
         </li>
       }
     </ul>

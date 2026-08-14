@@ -4,12 +4,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
+import { RedSocial } from '../../models/cortometraje.model';
 import { idDeYoutube } from '../../shared/youtube';
 import { Skeleton } from '../../shared/skeleton';
+import { RedSocialIcono } from '../../shared/red-social-icono';
+import { colorRedSocial, etiquetaRedSocial } from '../../shared/red-social';
 
 @Component({
   selector: 'app-evaluar-lista',
-  imports: [RouterLink, Skeleton],
+  imports: [RouterLink, Skeleton, RedSocialIcono],
   templateUrl: './evaluar-lista.html',
 })
 export class EvaluarLista {
@@ -25,6 +28,14 @@ export class EvaluarLista {
     const videoId = idDeYoutube(youtubeUrl);
     if (!videoId) return null;
     return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+  }
+
+  protected etiquetaRedSocial(valor: RedSocial): string {
+    return etiquetaRedSocial(valor);
+  }
+
+  protected colorRedSocial(valor: RedSocial): string {
+    return colorRedSocial(valor);
   }
 
   protected totalEvaluaciones(cortometrajeId: string): number {

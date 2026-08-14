@@ -28,16 +28,62 @@
       <p class="text-sm text-muted-foreground">Espera a que el organizador inicie la votación.</p>
     </div>
   } @else if (yaVoto()) {
-    <div class="flex flex-col items-center gap-3 rounded-2xl border border-accent bg-accent/5 p-10 text-center card-shadow">
-      <span class="flex size-14 items-center justify-center rounded-full bg-accent text-accent-content">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-7" aria-hidden="true">
-          <circle cx="12" cy="12" r="9.5" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8 12.5l2.5 2.5 5.5-6" />
-        </svg>
-      </span>
-      <p class="text-lg font-semibold text-foreground">¡Gracias por votar!</p>
+    <div class="flex flex-col gap-6">
+      <div class="flex flex-col items-center gap-3 rounded-2xl border border-accent bg-accent/5 p-10 text-center card-shadow">
+        <span class="flex size-14 items-center justify-center rounded-full bg-accent text-accent-content">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-7" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.5" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12.5l2.5 2.5 5.5-6" />
+          </svg>
+        </span>
+        <p class="text-lg font-semibold text-foreground">¡Gracias por votar!</p>
+      </div>
       @if (cortometrajes().find((c) => c.id === miVoto()?.cortometrajeId); as corto) {
-        <p class="text-sm text-muted-foreground">Votaste por <span class="font-medium text-foreground">{{ corto.titulo }}</span></p>
+        <div class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
+          @if (urlEmbed(corto.youtubeUrl); as videoUrl) {
+            <div class="aspect-video overflow-hidden rounded-md">
+              <iframe
+                class="size-full"
+                [src]="videoUrl"
+                title="Video de {{ corto.titulo }}"
+                loading="lazy"
+                allowfullscreen
+              ></iframe>
+            </div>
+          } @else {
+            <div class="flex aspect-video flex-col items-center justify-center gap-2 rounded-md bg-muted text-muted-foreground" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5 19.5 8v8l-3.75-2.5M4.5 6.75h9a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
+              </svg>
+              <span class="text-xs font-medium">Sin video</span>
+            </div>
+          }
+          <h2 class="text-lg font-semibold text-foreground">
+            {{ corto.titulo }}
+            <span class="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent align-middle">Tu voto</span>
+          </h2>
+          <p class="text-sm text-muted-foreground">Dir. {{ corto.director }}</p>
+          <p class="text-sm text-muted-foreground">{{ corto.descripcion }}</p>
+          @if (corto.campanasMarketing && corto.campanasMarketing.length > 0) {
+            <ul class="flex flex-wrap items-center gap-1.5">
+              @for (campana of corto.campanasMarketing; track campana.redSocial) {
+                <li>
+                  <a
+                    [href]="campana.liga"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [attr.aria-label]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                    [title]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                    class="flex size-8 items-center justify-center rounded-full p-1.5 text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [style.background]="colorRedSocial(campana.redSocial)"
+                  >
+                    <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </div>
       }
     </div>
   } @else if (cortometrajes().length === 0) {
@@ -47,11 +93,11 @@
   } @else {
     <ul class="flex flex-col gap-3">
       @for (corto of cortometrajes(); track corto.id; let i = $index) {
-        <li>
+        <li class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 card-shadow">
           <button
             type="button"
             (click)="votar(corto.id, corto.titulo)"
-            class="flex w-full cursor-pointer items-start gap-4 rounded-2xl border border-border bg-surface p-5 text-left card-shadow transition-all duration-150 hover:-translate-y-0.5 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="flex w-full cursor-pointer items-start gap-4 text-left transition-all duration-150 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
               {{ i + 1 }}
@@ -61,6 +107,25 @@
               <span class="line-clamp-2 text-sm text-muted-foreground">{{ corto.descripcion }}</span>
             </span>
           </button>
+          @if (corto.campanasMarketing && corto.campanasMarketing.length > 0) {
+            <ul class="flex flex-wrap items-center gap-1.5 pl-[3.25rem]">
+              @for (campana of corto.campanasMarketing; track campana.redSocial) {
+                <li>
+                  <a
+                    [href]="campana.liga"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [attr.aria-label]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                    [title]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                    class="flex size-8 items-center justify-center rounded-full p-1.5 text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    [style.background]="colorRedSocial(campana.redSocial)"
+                  >
+                    <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+                  </a>
+                </li>
+              }
+            </ul>
+          }
         </li>
       }
     </ul>

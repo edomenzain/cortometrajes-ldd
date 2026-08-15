@@ -166,18 +166,68 @@
             <p class="text-xs font-medium text-accent">Completó todas las evaluaciones.</p>
           }
 
-          <button
-            type="button"
-            (click)="eliminar(juez.id, juez.nombre)"
-            class="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-destructive transition-colors duration-150 hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
-              <path d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />
-            </svg>
-            Eliminar
-          </button>
+          <div class="mt-auto flex items-center gap-2">
+            <button
+              type="button"
+              (click)="abrirPreviewCorreo(juez)"
+              class="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-accent transition-colors duration-150 hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75 12 13.5l9.75-6.75M4.5 4.5h15a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V6a1.5 1.5 0 0 1 1.5-1.5Z" />
+              </svg>
+              Vista previa de correo
+            </button>
+            <button
+              type="button"
+              (click)="eliminar(juez.id, juez.nombre)"
+              class="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-destructive transition-colors duration-150 hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-4" aria-hidden="true">
+                <path d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />
+              </svg>
+              Eliminar
+            </button>
+          </div>
         </li>
       }
     </ul>
+  }
+
+  @if (correoPreview(); as juez) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" (click)="cerrarPreviewCorreo()"></div>
+      <div
+        class="relative flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="preview-correo-titulo"
+      >
+        <div>
+          <h2 id="preview-correo-titulo" class="text-lg font-semibold text-foreground">Vista previa de correo para {{ juez.nombre }}</h2>
+          <p class="mt-1 text-xs text-muted-foreground">
+            Solo vista previa. Copia el texto, completa la contraseña y pégalo en tu cliente de correo.
+          </p>
+        </div>
+
+        <pre class="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground">{{ textoCorreo() }}</pre>
+
+        <div class="flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="cerrarPreviewCorreo()"
+            class="inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-4 text-sm font-semibold text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            Cerrar
+          </button>
+          <button
+            type="button"
+            (click)="copiarCorreo()"
+            class="inline-flex h-10 cursor-pointer items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-content transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            {{ copiado() ? 'Copiado' : 'Copiar texto' }}
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </div>

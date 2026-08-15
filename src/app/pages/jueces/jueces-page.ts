@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
@@ -21,6 +21,9 @@ interface FilaJuez {
   selector: 'app-jueces-page',
   imports: [FormField, Skeleton, Alert, FieldError],
   templateUrl: './jueces-page.html',
+  host: {
+    '(document:keydown.escape)': 'cerrarPreviewCorreo()',
+  },
 })
 export class JuecesPage {
   private readonly auth = inject(AuthService);
@@ -44,6 +47,34 @@ export class JuecesPage {
   protected readonly error = signal<string | null>(null);
 
   protected readonly editandoId = signal<string | null>(null);
+
+  protected readonly correoPreview = signal<{ nombre: string; email: string } | null>(null);
+  protected readonly copiado = signal(false);
+
+  constructor() {
+    effect(() => {
+      document.body.style.overflow = this.correoPreview() ? 'hidden' : '';
+    });
+  }
+
+  protected readonly textoCorreo = computed(() => {
+    const juez = this.correoPreview();
+    if (!juez) return '';
+    const enlace = `${location.origin}/login`;
+    return (
+      `Asunto: Acceso como juez — Cortometrajes Diseño Digital y Producción Audiovisual\n\n` +
+      `Estimado(a) ${juez.nombre},\n\n` +
+      `Has sido seleccionado(a) como juez para evaluar los cortometrajes de Proceso de Producción Audiovisual 2026. ` +
+      `A continuación tus accesos:\n\n` +
+      `Liga de ingreso: ${enlace}\n` +
+      `Usuario: ${juez.email}\n` +
+      `Contraseña: (ingresa aquí la contraseña que le asignaste)\n\n` +
+      `Ingresa con estos datos para comenzar a evaluar los cortometrajes.\n` +
+      `Es muy importante que visualices y evalúes el 100% de los cortometrajes.\n` +
+      `Al final del correo se anexa un PDF con las instrucciones.\n\n` +
+      `Saludos,\nEquipo de Proceso de Producción Audiovisual 2026`
+    );
+  });
 
   protected readonly filas = computed<FilaJuez[]>(() => {
     const cortos = this.cortometrajes.cortometrajes();
@@ -75,6 +106,21 @@ export class JuecesPage {
       return;
     }
     this.modelo.set({ nombre: '', email: '', password: '' });
+  }
+
+  protected abrirPreviewCorreo(juez: FilaJuez): void {
+    this.correoPreview.set({ nombre: juez.nombre, email: juez.email });
+    this.copiado.set(false);
+  }
+
+  protected cerrarPreviewCorreo(): void {
+    this.correoPreview.set(null);
+    this.copiado.set(false);
+  }
+
+  protected async copiarCorreo(): Promise<void> {
+    await navigator.clipboard.writeText(this.textoCorreo());
+    this.copiado.set(true);
   }
 
   protected editar(id: string): void {

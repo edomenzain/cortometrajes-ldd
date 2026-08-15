@@ -131,6 +131,7 @@
             <th scope="col" class="px-5 py-3 font-medium">Cortometraje</th>
             <th scope="col" class="px-5 py-3 font-medium">Evaluaciones</th>
             <th scope="col" class="px-5 py-3 text-right font-medium">Promedio</th>
+            <th scope="col" class="px-5 py-3 text-right font-medium"><span class="sr-only">Reporte</span></th>
           </tr>
         </thead>
         <tbody>
@@ -143,6 +144,20 @@
                 <span class="inline-flex rounded-md bg-primary px-3 py-1 text-sm font-semibold text-primary-content">
                   {{ item.promedio.toFixed(1) }} / 10
                 </span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                @if (item.totalEvaluaciones > 0) {
+                  <button
+                    type="button"
+                    (click)="generarReporte(item.cortometrajeId)"
+                    class="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border px-3 text-xs font-medium text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="size-3.5" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                    </svg>
+                    Reporte
+                  </button>
+                }
               </td>
             </tr>
           }

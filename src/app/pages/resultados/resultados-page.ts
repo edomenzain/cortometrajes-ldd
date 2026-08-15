@@ -7,6 +7,12 @@ import { PremiacionesService } from '../../services/premiaciones.service';
 import { VotosPublicosService } from '../../services/votos-publicos.service';
 import { Skeleton } from '../../shared/skeleton';
 
+interface FilaReporte {
+  seccion: string;
+  criterio: string;
+  promedio: number;
+}
+
 interface Ranking {
   cortometrajeId: string;
   titulo: string;
@@ -110,11 +116,93 @@ export class ResultadosPage {
     });
   });
 
+  protected async generarReporte(cortometrajeId: string): Promise<void> {
+    const corto = this.cortometrajes.cortometrajes().find((c) => c.id === cortometrajeId);
+    if (!corto) return;
+
+    const usuario = this.auth.usuarioActual();
+    const todas = this.evaluaciones.evaluacionesParaPremiacion();
+    const evaluacionesTodas = usuario?.rol === 'admin' ? todas : todas.filter((e) => e.juezId === usuario?.id);
+    const evaluaciones = evaluacionesTodas.filter((e) => e.cortometrajeId === corto.id);
+    if (evaluaciones.length === 0) return;
+
+    const filas: FilaReporte[] = [];
+    for (const seccion of this.formulario.secciones()) {
+      for (const criterio of seccion.criterios) {
+        const valores = evaluaciones
+          .map((e) => e.puntuaciones[criterio.id])
+          .filter((v): v is number => v !== undefined);
+        const promedio = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+        filas.push({ seccion: seccion.nombre, criterio: criterio.texto, promedio });
+      }
+    }
+
+    const promedioGeneral =
+      evaluaciones.reduce((suma, e) => {
+        const valores = Object.values(e.puntuaciones);
+        return suma + (valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0);
+      }, 0) / evaluaciones.length;
+
+    const { jsPDF } = await import('jspdf');
+    const autoTable = (await import('jspdf-autotable')).default;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text(`Reporte de evaluación: ${corto.titulo}`, 14, 18);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-MX')}`, 14, 24);
+
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text(`Promedio general: ${promedioGeneral.toFixed(2)} / 10`, 14, 34);
+    doc.text(`Total de evaluaciones: ${evaluaciones.length}`, 14, 40);
+
+    autoTable(doc, {
+      startY: 46,
+      head: [['Sección', 'Criterio', 'Promedio']],
+      body: filas.map((fila) => [fila.seccion, fila.criterio, fila.promedio.toFixed(2)]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [51, 51, 51] },
+    });
+
+    const comentarios = evaluaciones
+      .map((e, i) => ({ juez: `Juez ${i + 1}`, comentario: e.comentario.trim() }))
+      .filter((c) => c.comentario.length > 0);
+
+    let y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
+    doc.setFontSize(13);
+    doc.text('Comentarios anónimos', 14, y);
+    y += 8;
+    doc.setFontSize(10);
+
+    if (comentarios.length === 0) {
+      doc.setTextColor(100);
+      doc.text('Sin comentarios registrados.', 14, y);
+    } else {
+      for (const c of comentarios) {
+        if (y > 280) {
+          doc.addPage();
+          y = 18;
+        }
+        doc.setTextColor(0);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${c.juez}:`, 14, y);
+        doc.setFont('helvetica', 'normal');
+        const lineas = doc.splitTextToSize(c.comentario, 180);
+        doc.text(lineas, 14, y + 5);
+        y += 5 + lineas.length * 5 + 4;
+      }
+    }
+
+    doc.save(`reporte-${corto.titulo.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
+  }
+
   private calcularRanking(
     filtrarPuntuaciones: (puntuaciones: Record<string, number>) => [string, number][],
   ): Ranking[] {
     const usuario = this.auth.usuarioActual();
-    const todas = this.evaluaciones.evaluaciones();
+    const todas = this.evaluaciones.evaluacionesParaPremiacion();
     const evaluacionesTodas = usuario?.rol === 'admin' ? todas : todas.filter((e) => e.juezId === usuario?.id);
     return this.cortometrajes
       .cortometrajes()

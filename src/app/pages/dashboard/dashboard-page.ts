@@ -103,7 +103,7 @@ export class DashboardPage {
 
   protected readonly lideresPorPremiacion = computed<LiderPremiacion[]>(() => {
     const mapa = this.criterioAPremiaciones();
-    const evaluacionesTodas = this.evaluaciones.evaluaciones();
+    const evaluacionesTodas = this.evaluaciones.evaluacionesParaPremiacion();
     return this.premiacionesService.premiaciones().map((premiacion) => {
       const ranking = this.cortometrajes
         .cortometrajes()

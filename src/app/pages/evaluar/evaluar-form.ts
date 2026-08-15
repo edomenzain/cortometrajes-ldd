@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { FormularioService } from '../../services/formulario.service';
@@ -20,7 +20,6 @@ export class EvaluarForm {
   private readonly cortometrajes = inject(CortometrajesService);
   private readonly formulario = inject(FormularioService);
   private readonly evaluaciones = inject(EvaluacionesService);
-  private readonly router = inject(Router);
 
   protected readonly juez = this.auth.usuarioActual;
   protected readonly cortometraje = computed(() => this.cortometrajes.porId(this.id()));
@@ -37,6 +36,7 @@ export class EvaluarForm {
   protected readonly comentario = signal('');
   protected readonly puntuaciones = signal<Record<string, number>>({});
   protected readonly intentoEnviar = signal(false);
+  protected readonly enviando = signal(false);
 
   protected readonly modoVista = signal<'pasos' | 'completo'>('pasos');
   protected readonly pasoActual = signal(0);
@@ -87,18 +87,21 @@ export class EvaluarForm {
     this.pasoActual.update((p) => Math.min(this.secciones().length - 1, p + 1));
   }
 
-  protected enviar(): void {
+  protected async enviar(): Promise<void> {
     this.intentoEnviar.set(true);
     const juez = this.juez();
     if (!juez || this.faltanPuntuaciones() || this.faltaComentario()) return;
+    if (this.enviando() || this.yaEvaluado()) return;
 
-    this.evaluaciones.agregar({
+    this.enviando.set(true);
+    const guardada = await this.evaluaciones.agregar({
       cortometrajeId: this.id(),
       juezId: juez.id,
       jurado: juez.nombre,
       puntuaciones: this.puntuaciones(),
       comentario: this.comentario(),
     });
-    this.router.navigate(['/resultados']);
+    this.enviando.set(false);
+    if (!guardada) return;
   }
 }

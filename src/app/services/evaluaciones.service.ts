@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Evaluacion } from '../models/evaluacion.model';
+import { CortometrajesService } from './cortometrajes.service';
 import { PeriodosService } from './periodos.service';
 
 const COLECCION = 'evaluaciones';
@@ -9,11 +10,28 @@ const COLECCION = 'evaluaciones';
 @Injectable({ providedIn: 'root' })
 export class EvaluacionesService {
   private readonly periodos = inject(PeriodosService);
+  private readonly cortometrajesService = inject(CortometrajesService);
 
   private readonly _evaluaciones = signal<Evaluacion[]>([]);
   readonly evaluaciones = computed(() => {
     const periodoId = this.periodos.seleccionado()?.id;
     return this._evaluaciones().filter((e) => e.periodoId === periodoId);
+  });
+
+  /**
+   * Solo evaluaciones de jueces que ya calificaron el 100% de los cortometrajes del periodo.
+   * Un juez con evaluaciones incompletas no debe afectar puntuaciones finales/premiaciones.
+   */
+  readonly evaluacionesParaPremiacion = computed(() => {
+    const totalCortos = this.cortometrajesService.cortometrajes().length;
+    if (totalCortos === 0) return [];
+    const cortosPorJuez = new Map<string, Set<string>>();
+    for (const e of this.evaluaciones()) {
+      const set = cortosPorJuez.get(e.juezId) ?? new Set<string>();
+      set.add(e.cortometrajeId);
+      cortosPorJuez.set(e.juezId, set);
+    }
+    return this.evaluaciones().filter((e) => (cortosPorJuez.get(e.juezId)?.size ?? 0) === totalCortos);
   });
 
   private readonly _cargando = signal(true);
@@ -33,15 +51,16 @@ export class EvaluacionesService {
     );
   }
 
-  agregar(datos: {
+  async agregar(datos: {
     cortometrajeId: string;
     juezId: string;
     jurado: string;
     puntuaciones: Record<string, number>;
     comentario: string;
-  }): void {
+  }): Promise<boolean> {
     const periodoId = this.periodos.seleccionado()?.id;
-    if (!periodoId) return;
+    if (!periodoId) return false;
+    if (this.yaEvaluo(datos.juezId, datos.cortometrajeId)) return false;
     const nueva: Omit<Evaluacion, 'id'> = {
       periodoId,
       cortometrajeId: datos.cortometrajeId,
@@ -51,7 +70,8 @@ export class EvaluacionesService {
       comentario: datos.comentario.trim(),
       creadoEn: Date.now(),
     };
-    addDoc(collection(db, COLECCION), nueva);
+    await addDoc(collection(db, COLECCION), nueva);
+    return true;
   }
 
   eliminar(id: string): void {

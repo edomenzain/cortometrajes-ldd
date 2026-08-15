@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { ConfirmService } from './confirm.service';
 
 @Component({
@@ -58,4 +58,10 @@ import { ConfirmService } from './confirm.service';
 })
 export class ConfirmDialog {
   protected readonly confirmar = inject(ConfirmService);
+
+  constructor() {
+    effect(() => {
+      document.body.style.overflow = this.confirmar.solicitud() ? 'hidden' : '';
+    });
+  }
 }

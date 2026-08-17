@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { sesionActiva, soloAdmin, soloInvitado, soloJuez } from './guards/auth.guard';
+import { resultadosGuard, soloAdmin, soloInvitado, soloJuez } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'resultados' },
@@ -50,7 +50,7 @@ export const routes: Routes = [
   },
   {
     path: 'resultados',
-    canActivate: [sesionActiva],
+    canActivate: [resultadosGuard],
     loadComponent: () => import('./pages/resultados/resultados-page').then((m) => m.ResultadosPage),
   },
   {

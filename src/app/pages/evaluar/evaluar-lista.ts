@@ -38,10 +38,6 @@ export class EvaluarLista {
     return colorRedSocial(valor);
   }
 
-  protected totalEvaluaciones(cortometrajeId: string): number {
-    return this.evaluaciones.porCortometraje(cortometrajeId).length;
-  }
-
   protected yaEvaluado(cortometrajeId: string): boolean {
     const juezId = this.auth.usuarioActual()?.id;
     return juezId ? this.evaluaciones.yaEvaluo(juezId, cortometrajeId) : false;

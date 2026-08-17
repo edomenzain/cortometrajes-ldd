@@ -39,3 +39,11 @@ export const soloJuez: CanActivateFn = async () => {
   if (!auth.usuarioActual()) return router.parseUrl('/login');
   return auth.esJuez() ? true : router.parseUrl('/resultados');
 };
+
+export const resultadosGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await esperarListo(auth);
+  if (!auth.usuarioActual()) return router.parseUrl('/login');
+  return auth.esJuez() ? router.parseUrl('/evaluar') : true;
+};

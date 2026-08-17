@@ -45,10 +45,7 @@ export class App {
       ];
     }
     if (this.auth.esJuez()) {
-      return [
-        { ruta: '/evaluar', etiqueta: 'Evaluar' },
-        { ruta: '/resultados', etiqueta: 'Resultados' },
-      ];
+      return [{ ruta: '/evaluar', etiqueta: 'Evaluar' }];
     }
     return [];
   });

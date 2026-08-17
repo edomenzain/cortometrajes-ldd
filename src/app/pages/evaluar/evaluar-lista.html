@@ -55,9 +55,6 @@
             </div>
             <p class="text-sm text-muted-foreground">Dir. {{ corto.director }}</p>
             <p class="line-clamp-3 text-sm text-muted-foreground">{{ corto.descripcion }}</p>
-            <span class="mt-auto text-sm font-medium text-primary">
-              {{ totalEvaluaciones(corto.id) }} evaluación(es) registrada(s)
-            </span>
           </a>
           @if (corto.campanasMarketing && corto.campanasMarketing.length > 0) {
             <ul class="flex flex-wrap items-center gap-1.5">

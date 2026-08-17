@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { FormularioService } from '../../services/formulario.service';
@@ -7,10 +8,14 @@ import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { SelectorPuntuacion } from '../../shared/selector-puntuacion';
 import { Skeleton } from '../../shared/skeleton';
 import { FieldError } from '../../shared/field-error';
+import { RedSocialIcono } from '../../shared/red-social-icono';
+import { colorRedSocial, etiquetaRedSocial } from '../../shared/red-social';
+import { idDeYoutube } from '../../shared/youtube';
+import { RedSocial } from '../../models/cortometraje.model';
 
 @Component({
   selector: 'app-evaluar-form',
-  imports: [RouterLink, SelectorPuntuacion, Skeleton, FieldError],
+  imports: [RouterLink, SelectorPuntuacion, Skeleton, FieldError, RedSocialIcono],
   templateUrl: './evaluar-form.html',
 })
 export class EvaluarForm {
@@ -20,6 +25,7 @@ export class EvaluarForm {
   private readonly cortometrajes = inject(CortometrajesService);
   private readonly formulario = inject(FormularioService);
   private readonly evaluaciones = inject(EvaluacionesService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly juez = this.auth.usuarioActual;
   protected readonly cortometraje = computed(() => this.cortometrajes.porId(this.id()));
@@ -66,6 +72,20 @@ export class EvaluarForm {
     if (valores.length === 0) return 0;
     return valores.reduce((a, b) => a + b, 0) / valores.length;
   });
+
+  protected urlEmbed(youtubeUrl: string | undefined): SafeResourceUrl | null {
+    const videoId = idDeYoutube(youtubeUrl);
+    if (!videoId) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+  }
+
+  protected etiquetaRedSocial(valor: RedSocial): string {
+    return etiquetaRedSocial(valor);
+  }
+
+  protected colorRedSocial(valor: RedSocial): string {
+    return colorRedSocial(valor);
+  }
 
   protected establecerPuntuacion(criterioId: string, valor: number): void {
     this.puntuaciones.update((actual) => ({ ...actual, [criterioId]: valor }));

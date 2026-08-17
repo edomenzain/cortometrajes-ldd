@@ -28,8 +28,51 @@
       <a routerLink="/evaluar" class="text-sm font-medium text-primary underline-offset-2 hover:underline">
         ← Volver a la lista
       </a>
-      <h1 class="mt-2 text-2xl font-semibold tracking-tight text-foreground">{{ cortometraje()!.titulo }}</h1>
-      <p class="mt-1 text-sm text-muted-foreground">{{ cortometraje()!.descripcion }}</p>
+    </div>
+
+    <div class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3 card-shadow sm:flex-row sm:gap-4 sm:p-4">
+      @if (urlEmbed(cortometraje()!.youtubeUrl); as videoUrl) {
+        <div class="aspect-video shrink-0 overflow-hidden rounded-md sm:w-48 md:w-56">
+          <iframe
+            class="size-full"
+            [src]="videoUrl"
+            title="Video de {{ cortometraje()!.titulo }}"
+            loading="lazy"
+            allowfullscreen
+          ></iframe>
+        </div>
+      } @else {
+        <div class="flex aspect-video shrink-0 flex-col items-center justify-center gap-1 rounded-md bg-muted text-muted-foreground sm:w-48 md:w-56" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5 19.5 8v8l-3.75-2.5M4.5 6.75h9a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
+          </svg>
+          <span class="text-xs font-medium">Sin video</span>
+        </div>
+      }
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
+        <h1 class="text-lg font-semibold tracking-tight text-foreground sm:text-xl">{{ cortometraje()!.titulo }}</h1>
+        <p class="text-sm text-muted-foreground">Dir. {{ cortometraje()!.director }}</p>
+        <p class="text-sm text-muted-foreground">{{ cortometraje()!.descripcion }}</p>
+        @if (cortometraje()!.campanasMarketing && cortometraje()!.campanasMarketing!.length > 0) {
+        <ul class="mt-1 flex flex-wrap items-center gap-1.5">
+          @for (campana of cortometraje()!.campanasMarketing; track campana.redSocial) {
+            <li>
+              <a
+                [href]="campana.liga"
+                target="_blank"
+                rel="noopener noreferrer"
+                [attr.aria-label]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                [title]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                class="flex size-7 items-center justify-center rounded-full p-1.5 text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                [style.background]="colorRedSocial(campana.redSocial)"
+              >
+                <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+              </a>
+            </li>
+          }
+        </ul>
+        }
+      </div>
     </div>
 
     <div class="flex items-center justify-end gap-1 rounded-md border border-border bg-surface p-1 self-end" role="group" aria-label="Vista del formulario">

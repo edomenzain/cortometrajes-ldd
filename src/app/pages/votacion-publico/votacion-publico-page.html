@@ -1,30 +1,45 @@
-<div class="flex flex-col gap-8">
+<div #contenedor class="flex flex-col gap-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight text-foreground">Votación del público</h1>
+      <h1 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+        Votación del público
+      </h1>
       <p class="mt-1 text-sm text-muted-foreground">Escanea el código para votar. Los resultados se actualizan en tiempo real.</p>
     </div>
     <div class="flex items-center gap-3">
-      <div
-        class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium"
-        [class]="abierta() ? 'text-muted-foreground' : 'text-muted-foreground'"
-      >
+      <div class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         @if (abierta()) {
-          <span class="relative flex size-2">
+          <span class="relative flex size-2.5">
             <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
-            <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
+            <span class="relative inline-flex size-2.5 rounded-full bg-accent"></span>
           </span>
-          Votación abierta
+          En vivo
         } @else {
-          <span class="relative inline-flex size-2 rounded-full bg-muted-foreground"></span>
+          <span class="relative inline-flex size-2.5 rounded-full bg-muted-foreground"></span>
           Votación cerrada
         }
       </div>
       <button
         type="button"
+        (click)="alternarPantallaCompleta()"
+        [attr.aria-label]="pantallaCompleta() ? 'Salir de pantalla completa' : 'Mostrar en pantalla completa'"
+        class="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        @if (pantallaCompleta()) {
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 3v4a1 1 0 0 1-1 1H4M15 3v4a1 1 0 0 0 1 1h4M9 21v-4a1 1 0 0 0-1-1H4M15 21v-4a1 1 0 0 1 1-1h4" />
+          </svg>
+        } @else {
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3H4a1 1 0 0 0-1 1v4M16 3h4a1 1 0 0 1 1 1v4M8 21H4a1 1 0 0 1-1-1v-4M16 21h4a1 1 0 0 0 1-1v-4" />
+          </svg>
+        }
+      </button>
+      <button
+        type="button"
         (click)="alternarVotacion()"
         [disabled]="cambiandoEstado()"
-        class="cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
+        class="cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
         [class]="abierta() ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-accent text-accent-content hover:bg-accent/90'"
       >
         {{ abierta() ? 'Detener votación' : 'Iniciar votación' }}
@@ -33,8 +48,10 @@
   </div>
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
-    <div class="flex flex-col items-center gap-5 rounded-2xl border border-border bg-surface p-6 text-center card-shadow">
-      <div class="rounded-2xl border border-border bg-background p-3">
+    <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-border bg-surface p-6 text-center card-shadow">
+      <div class="absolute inset-x-0 top-0 h-1 animate-shimmer bg-gradient-to-r from-transparent via-accent to-transparent bg-[length:200%_100%]"></div>
+      <div class="relative rounded-2xl border border-border bg-background p-3">
+        <div class="absolute -inset-1 -z-10 animate-spin-slow rounded-2xl bg-gradient-to-tr from-accent via-primary to-accent opacity-30 blur-md"></div>
         @if (qrDataUrl(); as qr) {
           <img [src]="qr" alt="Código QR para votar en {{ urlVotacion }}" width="280" height="280" class="w-full max-w-[240px] rounded-md" />
         } @else {
@@ -44,44 +61,100 @@
         }
       </div>
       <div>
-        <p class="text-4xl font-bold tracking-tight text-foreground">{{ totalVotos() }}</p>
+        <p class="tabular-nums text-5xl font-extrabold tracking-tight text-foreground">{{ totalVotosMostrado() }}</p>
         <p class="text-sm text-muted-foreground">votos recibidos</p>
       </div>
     </div>
 
-    <section class="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-6 card-shadow">
-      <h2 class="font-semibold text-foreground">Resultados</h2>
+    <section class="flex flex-col gap-1 rounded-2xl border border-border bg-surface p-6 card-shadow">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-foreground">Resultados</h2>
+        @if (abierta()) {
+          <span class="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span class="relative flex size-1.5">
+              <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
+              <span class="relative inline-flex size-1.5 rounded-full bg-accent"></span>
+            </span>
+            Actualizando en vivo
+          </span>
+        }
+      </div>
       @if (cargando()) {
-        <ul class="flex flex-col gap-4" aria-hidden="true">
+        <ul class="flex flex-col divide-y divide-border" aria-hidden="true">
           @for (i of filasEsqueleto; track i) {
-            <li class="flex items-center gap-3">
-              <app-skeleton clase="size-7 shrink-0 rounded-full" />
-              <div class="flex flex-1 flex-col gap-1.5">
+            <li class="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
+              <app-skeleton clase="size-10 shrink-0 rounded-full" />
+              <div class="flex flex-1 flex-col gap-2">
                 <app-skeleton clase="h-4 w-1/2" />
-                <app-skeleton clase="h-2.5 w-full rounded-full" />
+                <app-skeleton clase="h-3 w-full rounded-full" />
               </div>
             </li>
           }
         </ul>
       } @else if (resultados().length === 0) {
         <p class="text-sm text-muted-foreground">Todavía no hay cortometrajes registrados.</p>
+      } @else if (totalVotos() === 0) {
+        <div class="flex flex-col items-center gap-2 py-10 text-center">
+          <span class="relative flex size-3">
+            <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75"></span>
+            <span class="relative inline-flex size-3 rounded-full bg-accent"></span>
+          </span>
+          <p class="mt-2 text-sm font-medium text-foreground">Esperando los primeros votos…</p>
+          <p class="text-sm text-muted-foreground">Escanea el código para ser el primero en votar.</p>
+        </div>
       } @else {
-        <ul class="flex flex-col gap-4">
+        <ul [class]="pantallaCompleta() ? 'grid grid-cols-2 gap-5 sm:grid-cols-3 xl:grid-cols-4' : 'flex flex-col divide-y divide-border'">
           @for (r of resultados(); track r.cortometrajeId; let i = $index) {
-            <li class="flex items-center gap-3">
+            <li
+              #fila
+              [attr.data-id]="r.cortometrajeId"
+              class="flex animate-rise transition-colors duration-300"
+              [class]="
+                pantallaCompleta()
+                  ? 'flex-col items-center gap-3 rounded-2xl border p-5 text-center card-shadow ' +
+                    (i === 0 && r.votos > 0 ? 'border-accent bg-accent/5' : 'border-border bg-background')
+                  : 'items-center gap-4 rounded-xl px-2 py-4 first:pt-2 last:pb-2 ' + (i === 0 && r.votos > 0 ? 'bg-accent/5' : '')
+              "
+              [style.animation-delay.ms]="i * 70"
+            >
               <span
-                class="flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-                [class]="i === 0 ? 'bg-accent text-accent-content' : 'bg-muted text-muted-foreground'"
+                class="relative flex shrink-0 items-center justify-center rounded-full border font-bold tabular-nums"
+                [class]="
+                  (pantallaCompleta() ? 'size-14 text-lg ' : 'size-10 text-sm ') +
+                  (i === 0 && r.votos > 0
+                    ? 'animate-pulse-ring border-transparent bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950'
+                    : i === 1 && r.votos > 0
+                      ? 'border-transparent bg-gradient-to-br from-slate-300 to-slate-400 text-slate-800'
+                      : i === 2 && r.votos > 0
+                        ? 'border-transparent bg-gradient-to-br from-orange-300 to-orange-500 text-orange-950'
+                        : 'border-border bg-background text-muted-foreground')
+                "
               >
+                @if (i === 0 && r.votos > 0) {
+                  <svg class="absolute -top-4 size-5 text-amber-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="m2 7 5 3 5-7 5 7 5-3-2 13H4L2 7Z" />
+                  </svg>
+                }
                 {{ i + 1 }}
               </span>
-              <div class="flex flex-1 flex-col gap-1.5">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="font-medium text-foreground">{{ r.titulo }}</span>
-                  <span class="text-muted-foreground">{{ r.votos }} voto(s) · {{ r.porcentaje }}%</span>
+              <div class="flex flex-1 flex-col gap-2" [class.items-center]="pantallaCompleta()">
+                <div
+                  class="flex gap-3 text-sm"
+                  [class]="pantallaCompleta() ? 'flex-col items-center' : 'w-full items-center justify-between'"
+                >
+                  <span
+                    class="font-semibold text-foreground"
+                    [class]="pantallaCompleta() ? 'text-lg' : ''"
+                    [class.text-base]="!pantallaCompleta() && i === 0 && r.votos > 0"
+                  >
+                    {{ r.titulo }}
+                  </span>
+                  <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium tabular-nums text-muted-foreground">
+                    {{ r.votos }} voto(s) · {{ r.porcentaje }}%
+                  </span>
                 </div>
                 <div
-                  class="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+                  class="h-3 w-full overflow-hidden rounded-full bg-muted shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.06)]"
                   role="progressbar"
                   [attr.aria-label]="'Votos de ' + r.titulo"
                   [attr.aria-valuenow]="r.votos"
@@ -89,8 +162,8 @@
                   [attr.aria-valuemax]="totalVotos()"
                 >
                   <div
-                    class="h-full rounded-full transition-[width] duration-300"
-                    [class]="i === 0 ? 'bg-accent' : 'bg-primary'"
+                    class="h-full rounded-full bg-gradient-to-r transition-[width] duration-700 ease-out"
+                    [class]="i === 0 && r.votos > 0 ? 'from-amber-400 to-accent shadow-[0_0_10px_-1px_var(--color-accent)]' : 'from-primary to-primary'"
                     [style.width.%]="r.porcentaje"
                   ></div>
                 </div>
@@ -101,4 +174,86 @@
       }
     </section>
   </div>
+
+  @if (mostrarGanador() && ganador(); as corto) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Cortometraje ganador">
+      <canvas #canvasConfeti class="pointer-events-none fixed inset-0 size-full" aria-hidden="true"></canvas>
+      <div class="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border bg-surface card-shadow">
+        <button
+          type="button"
+          (click)="cerrarGanador()"
+          aria-label="Cerrar"
+          class="absolute top-4 right-4 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full bg-surface/80 text-muted-foreground backdrop-blur transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="flex flex-col items-center gap-1 bg-gradient-to-b from-amber-400/15 to-transparent px-6 pt-7 pb-4 text-center">
+          <span class="text-4xl" aria-hidden="true">🏆</span>
+          <p class="text-sm font-semibold tracking-wide text-accent uppercase">Cortometraje ganador</p>
+          <h2 class="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">{{ corto.titulo }}</h2>
+          <p class="text-sm text-muted-foreground">Dir. {{ corto.director }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 overflow-y-auto px-6 pb-6 sm:grid-cols-2">
+          <div class="aspect-video overflow-hidden rounded-xl bg-muted sm:sticky sm:top-0">
+            @if (urlEmbed(corto.youtubeUrl); as videoUrl) {
+              <iframe class="size-full" [src]="videoUrl" title="Video de {{ corto.titulo }}" loading="lazy" allowfullscreen></iframe>
+            } @else {
+              <div class="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5 19.5 8v8l-3.75-2.5M4.5 6.75h9a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
+                </svg>
+                <span class="text-xs font-medium">Sin video</span>
+              </div>
+            }
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <div class="rounded-xl border border-border bg-background p-4">
+              <p class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Sinopsis</p>
+              <p class="mt-1.5 text-sm leading-relaxed text-foreground">{{ corto.descripcion }}</p>
+            </div>
+
+            <div class="flex items-center gap-2 rounded-xl border border-accent/30 bg-accent/5 p-4">
+              <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-content">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0 0-4-4m4 4 4-4" />
+                </svg>
+              </span>
+              <p class="text-sm font-medium text-foreground">
+                {{ resultados()[0].votos }} de {{ totalVotos() }} voto(s)
+                <span class="block text-xs text-muted-foreground">{{ resultados()[0].porcentaje }}% de los votos totales</span>
+              </p>
+            </div>
+
+            @if (corto.campanasMarketing && corto.campanasMarketing.length > 0) {
+              <div>
+                <p class="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Campañas</p>
+                <ul class="flex flex-wrap items-center gap-1.5">
+                  @for (campana of corto.campanasMarketing; track campana.redSocial) {
+                    <li>
+                      <a
+                        [href]="campana.liga"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        [attr.aria-label]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                        [title]="'Ver campaña en ' + etiquetaRedSocial(campana.redSocial)"
+                        class="flex size-8 items-center justify-center rounded-full p-1.5 text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        [style.background]="colorRedSocial(campana.redSocial)"
+                      >
+                        <app-red-social-icono [redSocial]="campana.redSocial" class="size-full" />
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

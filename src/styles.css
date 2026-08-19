@@ -17,6 +17,8 @@
   --accent-content: #ffffff;
   --destructive: #dc2626;
   --destructive-content: #ffffff;
+  --warning: #d97706;
+  --warning-content: #78350f;
   --ring: #4f46e5;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.12);
   --gradient-hero: linear-gradient(135deg, #eef2ff 0%, #fafafb 60%);
@@ -37,6 +39,8 @@
   --accent-content: #0b0b0f;
   --destructive: #f87171;
   --destructive-content: #1a0a0a;
+  --warning: #f5b942;
+  --warning-content: #fef3c7;
   --ring: #8b7cff;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.55);
   --gradient-hero: linear-gradient(135deg, #191933 0%, #0b0b0f 60%);
@@ -59,6 +63,8 @@
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-destructive-content: var(--destructive-content);
+  --color-warning: var(--warning);
+  --color-warning-content: var(--warning-content);
   --color-ring: var(--ring);
 }
 
@@ -83,6 +89,65 @@ body {
 
 .hero-gradient {
   background-image: var(--gradient-hero);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise-in 0.45s ease-out both;
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 0%, transparent);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 6s linear infinite;
+}
+
+:fullscreen,
+:-webkit-full-screen {
+  overflow-y: auto;
+  background-color: var(--color-background);
+  padding: 2rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

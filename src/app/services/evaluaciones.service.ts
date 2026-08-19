@@ -19,19 +19,37 @@ export class EvaluacionesService {
   });
 
   /**
+   * Evaluaciones sin duplicados: una sola por juez/cortometraje, conservando la más antigua
+   * (mismo criterio que `limpiarDuplicados`). Todos los cálculos deben partir de aquí, no de
+   * `evaluaciones()`, para que las duplicadas no inflen avances ni promedios.
+   */
+  readonly evaluacionesUnicas = computed(() => {
+    const porClave = new Map<string, Evaluacion>();
+    for (const e of this.evaluaciones()) {
+      const clave = `${e.juezId}::${e.cortometrajeId}`;
+      const actual = porClave.get(clave);
+      if (!actual || e.creadoEn < actual.creadoEn) {
+        porClave.set(clave, e);
+      }
+    }
+    return [...porClave.values()];
+  });
+
+  /**
    * Solo evaluaciones de jueces que ya calificaron el 100% de los cortometrajes del periodo.
    * Un juez con evaluaciones incompletas no debe afectar puntuaciones finales/premiaciones.
    */
   readonly evaluacionesParaPremiacion = computed(() => {
     const totalCortos = this.cortometrajesService.cortometrajes().length;
     if (totalCortos === 0) return [];
+    const unicas = this.evaluacionesUnicas();
     const cortosPorJuez = new Map<string, Set<string>>();
-    for (const e of this.evaluaciones()) {
+    for (const e of unicas) {
       const set = cortosPorJuez.get(e.juezId) ?? new Set<string>();
       set.add(e.cortometrajeId);
       cortosPorJuez.set(e.juezId, set);
     }
-    return this.evaluaciones().filter((e) => (cortosPorJuez.get(e.juezId)?.size ?? 0) === totalCortos);
+    return unicas.filter((e) => (cortosPorJuez.get(e.juezId)?.size ?? 0) === totalCortos);
   });
 
   private readonly _cargando = signal(true);
@@ -79,14 +97,35 @@ export class EvaluacionesService {
   }
 
   porCortometraje(cortometrajeId: string): Evaluacion[] {
-    return this.evaluaciones().filter((e) => e.cortometrajeId === cortometrajeId);
+    return this.evaluacionesUnicas().filter((e) => e.cortometrajeId === cortometrajeId);
   }
 
   porJuez(juezId: string): Evaluacion[] {
-    return this.evaluaciones().filter((e) => e.juezId === juezId);
+    return this.evaluacionesUnicas().filter((e) => e.juezId === juezId);
   }
 
   yaEvaluo(juezId: string, cortometrajeId: string): boolean {
     return this.evaluaciones().some((e) => e.juezId === juezId && e.cortometrajeId === cortometrajeId);
+  }
+
+  /**
+   * Elimina evaluaciones duplicadas (mismo juez y cortometraje), conservando la más antigua de cada grupo.
+   */
+  async limpiarDuplicados(): Promise<number> {
+    const porClave = new Map<string, Evaluacion[]>();
+    for (const e of this.evaluaciones()) {
+      const clave = `${e.juezId}::${e.cortometrajeId}`;
+      const grupo = porClave.get(clave) ?? [];
+      grupo.push(e);
+      porClave.set(clave, grupo);
+    }
+    const aEliminar: string[] = [];
+    for (const grupo of porClave.values()) {
+      if (grupo.length <= 1) continue;
+      const [, ...resto] = [...grupo].sort((a, b) => a.creadoEn - b.creadoEn);
+      aEliminar.push(...resto.map((e) => e.id));
+    }
+    await Promise.all(aEliminar.map((id) => deleteDoc(doc(db, COLECCION, id))));
+    return aEliminar.length;
   }
 }

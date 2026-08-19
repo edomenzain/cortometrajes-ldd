@@ -56,6 +56,31 @@
     </div>
   </div>
 
+  @if (evaluacionesDuplicadas().length > 0) {
+    <section class="flex flex-col gap-4 rounded-2xl border border-warning bg-warning/10 p-6 card-shadow" role="alert">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-semibold text-warning-content">Evaluaciones duplicadas ({{ totalEvaluacionesDuplicadas() }})</h2>
+        <button
+          type="button"
+          (click)="limpiarDuplicados()"
+          [disabled]="limpiandoDuplicados()"
+          class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-warning px-3 py-1.5 text-sm font-medium text-warning-content transition-colors duration-150 hover:bg-warning/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ limpiandoDuplicados() ? 'Limpiando…' : 'Limpiar duplicados' }}
+        </button>
+      </div>
+      <p class="text-sm text-warning-content/80">Hay jueces con más de una evaluación para el mismo cortometraje.</p>
+      <ul class="flex flex-col divide-y divide-warning/20">
+        @for (juez of evaluacionesDuplicadas(); track juez.id) {
+          <li class="flex items-center justify-between gap-3 py-2 text-sm">
+            <span class="font-medium text-warning-content">{{ juez.nombre }}</span>
+            <span class="text-warning-content/80">{{ juez.cantidad }} duplicada(s)</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
   <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
     <h2 class="font-semibold text-foreground">Premiaciones ({{ totalPremiaciones() }})</h2>
     @if (lideresPorPremiacion().length === 0) {
@@ -79,27 +104,48 @@
     }
   </section>
 
-  <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
-    <h2 class="font-semibold text-foreground">Voto del público ({{ totalVotosPublico() }})</h2>
-    @if (votosPublicoResultados().length === 0) {
-      <p class="text-sm text-muted-foreground">Todavía no hay cortometrajes registrados.</p>
-    } @else {
+  @if (totalVotosPublico() > 0) {
+    <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">
+      <h2 class="flex items-center gap-2 font-semibold text-foreground">
+        <svg class="size-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+          <path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4" />
+        </svg>
+        Voto del público ({{ totalVotosPublico() }})
+      </h2>
       <ul class="flex flex-col gap-4">
         @for (v of votosPublicoResultados(); track v.cortometrajeId; let i = $index) {
-          <li class="flex items-center gap-3">
+          <li
+            class="flex animate-rise items-center gap-3 rounded-xl p-2 transition-colors duration-200"
+            [class]="i === 0 && v.votos > 0 ? 'bg-accent/5' : ''"
+            [style.animation-delay.ms]="i * 70"
+          >
             <span
-              class="flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-              [class]="i === 0 && v.votos > 0 ? 'bg-accent text-accent-content' : 'bg-muted text-muted-foreground'"
+              class="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+              [class]="
+                i === 0 && v.votos > 0
+                  ? 'animate-pulse-ring bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950'
+                  : i === 1 && v.votos > 0
+                    ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-800'
+                    : i === 2 && v.votos > 0
+                      ? 'bg-gradient-to-br from-orange-300 to-orange-500 text-orange-950'
+                      : 'bg-muted text-muted-foreground'
+              "
             >
+              @if (i === 0 && v.votos > 0) {
+                <svg class="absolute -top-3 size-3.5 text-amber-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="m2 7 5 3 5-7 5 7 5-3-2 13H4L2 7Z" />
+                </svg>
+              }
               {{ i + 1 }}
             </span>
             <div class="flex flex-1 flex-col gap-1.5">
               <div class="flex items-center justify-between text-sm">
-                <span class="font-medium text-foreground">{{ v.titulo }}</span>
-                <span class="text-muted-foreground">{{ v.votos }} voto(s) · {{ v.porcentaje }}%</span>
+                <span class="font-medium text-foreground" [class.text-base]="i === 0 && v.votos > 0">{{ v.titulo }}</span>
+                <span class="tabular-nums text-muted-foreground">{{ v.votos }} voto(s) · {{ v.porcentaje }}%</span>
               </div>
               <div
-                class="h-2 w-full overflow-hidden rounded-full bg-muted"
+                class="h-2.5 w-full overflow-hidden rounded-full bg-muted"
                 role="progressbar"
                 [attr.aria-label]="'Votos del público de ' + v.titulo"
                 [attr.aria-valuenow]="v.votos"
@@ -107,17 +153,18 @@
                 [attr.aria-valuemax]="totalVotosPublico()"
               >
                 <div
-                  class="h-full rounded-full transition-[width] duration-300"
-                  [class]="i === 0 && v.votos > 0 ? 'bg-accent' : 'bg-primary'"
-                  [style.width.%]="v.porcentaje"
+                  class="h-full rounded-full bg-gradient-to-r transition-[width] duration-700 ease-out"
+                  [class]="i === 0 && v.votos > 0 ? 'from-amber-400 to-accent shadow-[0_0_10px_-1px_var(--color-accent)]' : 'from-primary to-primary'"
+                  [style.width.%]="barrasVisibles() ? v.porcentaje : 0"
+                  [style.transition-delay.ms]="i * 70"
                 ></div>
               </div>
             </div>
           </li>
         }
       </ul>
-    }
-  </section>
+    </section>
+  }
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <section class="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 card-shadow">

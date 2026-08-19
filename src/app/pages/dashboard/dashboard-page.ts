@@ -1,10 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
 import { FormularioService } from '../../services/formulario.service';
 import { PremiacionesService } from '../../services/premiaciones.service';
 import { VotosPublicosService } from '../../services/votos-publicos.service';
+import { ConfirmService } from '../../shared/confirm.service';
 import { Skeleton } from '../../shared/skeleton';
 
 interface ProgresoJuez {
@@ -29,6 +30,12 @@ interface Actividad {
   jurado: string;
   cortometraje: string;
   fecha: string;
+}
+
+interface JuezDuplicado {
+  id: string;
+  nombre: string;
+  cantidad: number;
 }
 
 interface LiderPremiacion {
@@ -58,6 +65,18 @@ export class DashboardPage {
   private readonly formulario = inject(FormularioService);
   private readonly premiacionesService = inject(PremiacionesService);
   private readonly votosPublicos = inject(VotosPublicosService);
+  private readonly confirmar = inject(ConfirmService);
+
+  protected readonly limpiandoDuplicados = signal(false);
+  protected readonly barrasVisibles = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (!this.cargando()) {
+        setTimeout(() => this.barrasVisibles.set(true), 50);
+      }
+    });
+  }
 
   protected readonly cargando = computed(
     () =>
@@ -136,7 +155,7 @@ export class DashboardPage {
   protected readonly totalCortos = computed(() => this.cortometrajes.cortometrajes().length);
 
   protected readonly totalEsperado = computed(() => this.totalJueces() * this.totalCortos());
-  protected readonly totalRealizado = computed(() => this.evaluaciones.evaluaciones().length);
+  protected readonly totalRealizado = computed(() => this.evaluaciones.evaluacionesUnicas().length);
 
   protected readonly porcentajeGeneral = computed(() => {
     const esperado = this.totalEsperado();
@@ -182,6 +201,44 @@ export class DashboardPage {
       })
       .sort((a, b) => a.porcentaje - b.porcentaje);
   });
+
+  protected readonly evaluacionesDuplicadas = computed<JuezDuplicado[]>(() => {
+    const conteoPorJuez = new Map<string, { nombre: string; duplicadas: number }>();
+    const vistos = new Map<string, number>();
+    for (const e of this.evaluaciones.evaluaciones()) {
+      const clave = `${e.juezId}::${e.cortometrajeId}`;
+      const veces = (vistos.get(clave) ?? 0) + 1;
+      vistos.set(clave, veces);
+      if (veces > 1) {
+        const actual = conteoPorJuez.get(e.juezId) ?? { nombre: e.jurado, duplicadas: 0 };
+        actual.duplicadas += 1;
+        conteoPorJuez.set(e.juezId, actual);
+      }
+    }
+    return [...conteoPorJuez.entries()]
+      .map(([id, { nombre, duplicadas }]) => ({ id, nombre, cantidad: duplicadas }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+  });
+
+  protected readonly totalEvaluacionesDuplicadas = computed(() =>
+    this.evaluacionesDuplicadas().reduce((total, j) => total + j.cantidad, 0),
+  );
+
+  protected async limpiarDuplicados(): Promise<void> {
+    const total = this.totalEvaluacionesDuplicadas();
+    if (total === 0) return;
+    const confirmado = await this.confirmar.pedir(
+      `Se eliminarán ${total} evaluación(es) duplicada(s), dejando solo la más antigua de cada juez/cortometraje. Esta acción no se puede deshacer.`,
+      { textoAceptar: 'Limpiar duplicados', destructivo: true },
+    );
+    if (!confirmado) return;
+    this.limpiandoDuplicados.set(true);
+    try {
+      await this.evaluaciones.limpiarDuplicados();
+    } finally {
+      this.limpiandoDuplicados.set(false);
+    }
+  }
 
   protected readonly actividadReciente = computed<Actividad[]>(() =>
     [...this.evaluaciones.evaluaciones()]

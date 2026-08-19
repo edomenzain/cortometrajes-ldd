@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
@@ -12,6 +12,8 @@ import { RedSocialIcono } from '../../shared/red-social-icono';
 import { colorRedSocial, etiquetaRedSocial } from '../../shared/red-social';
 import { idDeYoutube } from '../../shared/youtube';
 import { RedSocial } from '../../models/cortometraje.model';
+
+const TIEMPO_LIMITE_ENVIO_MS = 8000;
 
 @Component({
   selector: 'app-evaluar-form',
@@ -26,6 +28,7 @@ export class EvaluarForm {
   private readonly formulario = inject(FormularioService);
   private readonly evaluaciones = inject(EvaluacionesService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
 
   protected readonly juez = this.auth.usuarioActual;
   protected readonly cortometraje = computed(() => this.cortometrajes.porId(this.id()));
@@ -114,14 +117,21 @@ export class EvaluarForm {
     if (this.enviando() || this.yaEvaluado()) return;
 
     this.enviando.set(true);
-    const guardada = await this.evaluaciones.agregar({
-      cortometrajeId: this.id(),
-      juezId: juez.id,
-      jurado: juez.nombre,
-      puntuaciones: this.puntuaciones(),
-      comentario: this.comentario(),
-    });
-    this.enviando.set(false);
-    if (!guardada) return;
+    const limite = setTimeout(() => this.router.navigateByUrl('/evaluar'), TIEMPO_LIMITE_ENVIO_MS);
+    let guardada = false;
+    try {
+      guardada = await this.evaluaciones.agregar({
+        cortometrajeId: this.id(),
+        juezId: juez.id,
+        jurado: juez.nombre,
+        puntuaciones: this.puntuaciones(),
+        comentario: this.comentario(),
+      });
+    } finally {
+      clearTimeout(limite);
+      // Si se guardó, el botón queda deshabilitado: no reactivar para evitar duplicados.
+      if (!guardada) this.enviando.set(false);
+    }
+    if (guardada) this.router.navigateByUrl('/evaluar');
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
 import { EvaluacionesService } from '../../services/evaluaciones.service';
@@ -60,6 +60,15 @@ export class ResultadosPage {
       this.votosPublicos.cargando(),
   );
   protected readonly filasEsqueleto = [0, 1, 2];
+  protected readonly barrasVisibles = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (!this.cargando()) {
+        setTimeout(() => this.barrasVisibles.set(true), 50);
+      }
+    });
+  }
 
   protected readonly totalVotosPublico = this.votosPublicos.totalVotos;
 

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { CortometrajesService } from '../../services/cortometrajes.service';
@@ -12,8 +12,6 @@ import { RedSocialIcono } from '../../shared/red-social-icono';
 import { colorRedSocial, etiquetaRedSocial } from '../../shared/red-social';
 import { idDeYoutube } from '../../shared/youtube';
 import { RedSocial } from '../../models/cortometraje.model';
-
-const TIEMPO_LIMITE_ENVIO_MS = 8000;
 
 @Component({
   selector: 'app-evaluar-form',
@@ -28,7 +26,6 @@ export class EvaluarForm {
   private readonly formulario = inject(FormularioService);
   private readonly evaluaciones = inject(EvaluacionesService);
   private readonly sanitizer = inject(DomSanitizer);
-  private readonly router = inject(Router);
 
   protected readonly juez = this.auth.usuarioActual;
   protected readonly cortometraje = computed(() => this.cortometrajes.porId(this.id()));
@@ -46,6 +43,7 @@ export class EvaluarForm {
   protected readonly puntuaciones = signal<Record<string, number>>({});
   protected readonly intentoEnviar = signal(false);
   protected readonly enviando = signal(false);
+  protected readonly errorEnvio = signal<string | null>(null);
 
   protected readonly modoVista = signal<'pasos' | 'completo'>('pasos');
   protected readonly pasoActual = signal(0);
@@ -117,21 +115,22 @@ export class EvaluarForm {
     if (this.enviando() || this.yaEvaluado()) return;
 
     this.enviando.set(true);
-    const limite = setTimeout(() => this.router.navigateByUrl('/evaluar'), TIEMPO_LIMITE_ENVIO_MS);
-    let guardada = false;
+    this.errorEnvio.set(null);
     try {
-      guardada = await this.evaluaciones.agregar({
+      const guardada = await this.evaluaciones.agregar({
         cortometrajeId: this.id(),
         juezId: juez.id,
         jurado: juez.nombre,
         puntuaciones: this.puntuaciones(),
         comentario: this.comentario(),
       });
+      if (!guardada) {
+        this.errorEnvio.set('Ya existe una evaluación registrada para este cortometraje.');
+      }
+    } catch {
+      this.errorEnvio.set('No se pudo guardar la evaluación. Intenta de nuevo.');
     } finally {
-      clearTimeout(limite);
-      // Si se guardó, el botón queda deshabilitado: no reactivar para evitar duplicados.
-      if (!guardada) this.enviando.set(false);
+      this.enviando.set(false);
     }
-    if (guardada) this.router.navigateByUrl('/evaluar');
   }
 }
